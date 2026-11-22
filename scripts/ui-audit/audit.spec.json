@@ -1,0 +1,35 @@
+{
+  "origin": "http://127.0.0.1:4173",
+  "outDir": "temp/ui-audit/run",
+  "width": 412,
+  "height": 900,
+  "waitMs": 4500,
+  "seedScript": "localStorage.setItem('theme','light'); localStorage.setItem('score_func','nutriscore');\n(() => {\n  const now = Date.now();\n  const products = [\n    { code: '3168930010265', scannedAt: now - 4000, product: { product_name: 'Organic Oat Flakes', brands: 'Bjorg', nutriscore_grade: 'a', additives_tags: [], labels_tags: ['en:organic'], nutrient_levels: { sugars: 'low', salt: 'low', fat: 'low', 'saturated-fat': 'low' }, nutriments: { 'energy-kcal_100g': 372, 'fat_100g': 7, 'saturated-fat_100g': 1.2, 'sugars_100g': 1, 'salt_100g': 0.01 } } },\n    { code: '3017620422003', scannedAt: now - 3000, product: { product_name: 'Hazelnut Spread', brands: 'Ferrero', nutriscore_grade: 'c', nutriscore_score: 12, nova_group: 4, ecoscore_grade: 'd', ingredients_text_en: 'Sugar, palm oil, hazelnuts 13%.', additives_tags: ['en:e322','en:e250','en:e202'], labels_tags: ['en:no-gluten'], nutrient_levels: { fat: 'high', salt: 'low', 'saturated-fat': 'high', sugars: 'high' }, nutriments: { 'energy-kcal_100g': 544, 'fat_100g': 30.9, 'saturated-fat_100g': 10.6, 'sugars_100g': 56.3, 'salt_100g': 0.107 } } },\n    { code: '5449000000996', scannedAt: now - 2000, product: { product_name: 'Cola', brands: 'Coca-Cola', nutriscore_grade: 'e', nova_group: 4, additives_tags: ['en:e150d','en:e338'], labels_tags: [], nutrient_levels: { sugars: 'high' }, nutriments: { 'energy-kcal_100g': 42, 'sugars_100g': 10.6, 'salt_100g': 0.01 } } },\n    { code: '1234567890128', scannedAt: now - 1000, product: { product_name: 'Mystery Bar With No Nutrition Data', brands: 'Unknown Brand', additives_tags: ['en:e621'], labels_tags: [], nutriments: {} } }\n  ];\n  const req = indexedDB.open('FoodScanDB', 1);\n  req.onupgradeneeded = () => { const idb = req.result; if (!idb.objectStoreNames.contains('products')) { const s = idb.createObjectStore('products', { keyPath: 'code' }); s.createIndex('product.product_name','product.product_name'); s.createIndex('product.brands','product.brands'); } };\n  req.onsuccess = () => { const idb = req.result; try { const tx = idb.transaction('products','readwrite'); const s = tx.objectStore('products'); for (const p of products) s.put(p); tx.oncomplete = () => idb.close(); } catch (e) { idb.close(); } };\n})();",
+  "pages": [
+    {
+      "name": "home-light-rings",
+      "path": "/",
+      "probe": "(() => { const cards = [...document.querySelectorAll('a[href*=\"/history/\"]')]; return { order: cards.map(c => c.querySelector('h3')?.textContent.trim()), rings: cards.map(c => { const p = c.querySelector('.radial-progress'); const d = c.querySelector('.w-2.h-2.rounded-full'); return { grade: p?.textContent.trim(), score: getComputedStyle(p).getPropertyValue('--value').trim(), ringColor: p ? getComputedStyle(p).color : null, dot: d ? getComputedStyle(d).backgroundColor : null }; }) }; })()"
+    },
+    {
+      "name": "detail-grade-a",
+      "path": "/history/3168930010265",
+      "probe": "(() => { const p = document.querySelector('.radial-progress'); const caption = [...document.querySelectorAll('span')].find(s => /Score$/.test(s.textContent.trim())); return { ring: getComputedStyle(p).color, caption: caption ? { text: caption.textContent.trim(), color: getComputedStyle(caption).color } : null, title: document.querySelector('h1')?.textContent.trim() }; })()"
+    },
+    {
+      "name": "detail-navigation-no-stale",
+      "path": "/history/3017620422003",
+      "probe": "(() => { const first = document.body.innerText.includes('Hazelnut Spread'); const history = [...document.querySelectorAll('nav button')].find(b => b.textContent.includes('History')); history.click(); return new Promise(r => setTimeout(() => { document.querySelector('a[href*=\"/history/5449000000996\"]')?.click(); setTimeout(() => r({ sawFirstProduct: first, afterNavigation: { title: document.querySelector('h1')?.textContent.trim(), stillShowsPrevious: document.body.innerText.includes('Hazelnut Spread') } }), 1500); }, 1200)); })()"
+    },
+    {
+      "name": "settings-score-toggle",
+      "path": "/settings",
+      "probe": "(() => { [...document.querySelectorAll('.join button')].find(b => b.textContent.includes('App')).click(); return new Promise(r => setTimeout(() => r({ stored: localStorage.getItem('score_func'), buttons: [...document.querySelectorAll('.join button')].map(b => ({ text: b.textContent.trim(), accent: b.className.includes('btn-accent') })) }), 700)); })()"
+    },
+    {
+      "name": "home-dark-rings",
+      "path": "/",
+      "probe": "(() => { localStorage.setItem('theme','dark'); document.documentElement.setAttribute('data-theme','dark'); return new Promise(r => setTimeout(() => { const cards = [...document.querySelectorAll('a[href*=\"/history/\"]')]; r({ theme: document.documentElement.getAttribute('data-theme'), rings: cards.map(c => { const p = c.querySelector('.radial-progress'); return { grade: p?.textContent.trim(), ring: getComputedStyle(p).color, border: getComputedStyle(p).borderTopColor }; }) }); }, 400)); })()"
+    }
+  ]
+}
