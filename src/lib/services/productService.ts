@@ -97,6 +97,11 @@ export class ProductService {
         // 429 is the per-client limit; 503 is the global one Open Food Facts
         // applies to an endpoint regardless of who is asking.
         if (res.status === 429 || res.status === 503) return { type: "rate_limited" };
+
+        // An unknown barcode is answered with 404 plus a `status: 0` body, which
+        // is a definitive "no such product" rather than a broken response.
+        if (res.status === 404) return { type: "not_found" };
+
         if (!res.ok) return { type: "malformed" };
 
         const parsed = parseProductPayload(await res.json());

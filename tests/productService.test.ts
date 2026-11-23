@@ -107,12 +107,20 @@ describe("ProductService ingestion", () => {
     });
 
     it("blacklists and reports a product the API does not know", async () => {
-        const { service, store } = serviceWith(jsonResponse(notFound));
+        const { service, store } = serviceWith(jsonResponse(notFound, 404));
 
-        expect(await service.lookup("9999999999999")).toEqual({ type: "not_found", code: "9999999999999" });
+        expect(await service.lookup("8712345678906")).toEqual({ type: "not_found", code: "8712345678906" });
         expect(store.add).not.toHaveBeenCalled();
-        expect(productCache.isBlacklisted("9999999999999")).toBe(true);
-        expect(await service.lookup("9999999999999")).toEqual({ type: "blacklisted" });
+        expect(productCache.isBlacklisted("8712345678906")).toBe(true);
+        expect(await service.lookup("8712345678906")).toEqual({ type: "blacklisted" });
+    });
+
+    it("reports a 404 as not_found rather than a broken response", async () => {
+        // The v2 API answers an unknown barcode with HTTP 404 and this body.
+        const { service, store } = serviceWith(jsonResponse(notFound, 404));
+
+        expect(await service.lookup("8712345678906")).toEqual({ type: "not_found", code: "8712345678906" });
+        expect(store.add).not.toHaveBeenCalled();
     });
 
     it("reports a 200 response with an unusable body as an error and stores nothing", async () => {
