@@ -234,20 +234,45 @@ export const Scanner = new ScannerController(); // Singleton export
 ---
 
 ## Testing Notes
-Vitest is configured. Four suites live in `tests/`:
+Vitest is configured. The suites live in `tests/`:
 
 | File | Covers |
 |------|--------|
 | `tests/productParse.test.ts` | Open Food Facts envelope parsing, using real captured payloads |
 | `tests/productAnalysis.test.ts` | Scoring, ratings, nutrient rows, calories, additives |
+| `tests/productAnalysis.real.test.ts` | Every raw payload in `tests/fixtures/real/` through parser + analyser, plus scenario assertions |
 | `tests/productService.test.ts` | Ingestion orchestration with an injected fetch and store |
+| `tests/productOrder.test.ts` | History ordering |
+| `tests/apiRateLimiter.test.ts` | Sliding-window rate limiting |
+| `tests/serviceWorkerCache.test.ts` | Service-worker cache selection |
 | `tests/apiIngestion.live.test.ts` | Live Open Food Facts calls; needs network access |
 
 Conventions to follow when adding tests:
-1. Prefer real captured API payloads over invented ones; refresh them with
-   `tests/capture-fixtures.ps1` (writes into `tests/fixtures/`).
+1. Prefer real captured API payloads over invented ones. Two sources exist:
+   - `tests/fixtures/*.json` — small trimmed envelopes refreshed by
+     `tests/capture-fixtures.ps1`.
+   - `tests/fixtures/real/` — full raw responses (including large unused
+     fields), driven by `catalog.json`; capture or refresh with
+     `bun tests/capture-real-products.mjs [--refresh] [--only=CODE]`. The
+     script waits 6.5 s between calls to stay under Open Food Facts' 10
+     requests/minute guidance, and backs off on 429/503. Add a barcode and the
+     data gap it covers to `catalog.json` first; `manifest.json` is generated
+     for review only.
 2. Inject dependencies (`fetchImpl`, `repo`, `limiter`) instead of reaching for
    the network, IndexedDB, or module-level shared state.
 3. Pass `{ useCustomScore: "app" | "nutriscore" }` to `ProductAnalysis` rather
    than mutating global settings, so tests stay order-independent.
 4. Keep live tests in a `*.live.test.ts` file so they can be excluded offline.
+
+The real fixtures intentionally pin current quirks, not ideals. Two known
+gaps they document: the API emits Eco-Score values (`f`, `a-plus`,
+`not-applicable`) outside the `a-e` union, and a product with no nutrition data
+still reaches an app score of 30 (rating E). Treat those assertions as
+characterization tests to update deliberately.
+
+The app calls the **deprecated v2** endpoints. v3.6 is the current API but
+changes the envelope (`status: "success"`, `result`/`errors`), renames
+`ecoscore_grade` to `environmental_score_grade`, and replaces `nutriments`
+with `nutrition.aggregated_set.nutrients`. Migrating is a parser change, not a
+URL swap.
+

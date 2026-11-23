@@ -49,7 +49,7 @@ foreach ($t in $targets) {
     "wrote $($t.file) ($($json.Length) chars)"
 }
 
-# the not-found envelope shape used by the v2 API
-$nf = '{"status":0,"status_verbose":"no code found in the database","code":"9999999999999"}'
+# the not-found envelope shape used by the v2 API, served with HTTP 404
+$nf = '{"code":"8712345678906","status":0,"status_verbose":"product not found"}'
 Set-Content -Path (Join-Path $root 'tests\fixtures\not-found.json') -Value $nf -Encoding utf8
 'wrote not-found.json'

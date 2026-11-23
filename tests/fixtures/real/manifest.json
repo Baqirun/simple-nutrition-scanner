@@ -1,0 +1,565 @@
+{
+    "description": "Real Open Food Facts v2 product responses, captured for offline parsing and analysis tests. `scenario` names the data shape the fixture pins down; `why` explains what it is here to catch. Refresh with `bun tests/capture-real-products.mjs --refresh` (6.5s between calls).",
+    "products": [
+        {
+            "code": "3017620422003",
+            "file": "3017620422003.json",
+            "scenario": "full-data",
+            "why": "Dense modern payload: Nutri-Score e, Nova 3, no additives, populated nutrient_levels, kcal and kJ energy, and a real ecoscore_grade of 'f' that the current a-e union silently drops.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Nutella",
+                "brands": "Ferrero, Nutella",
+                "grade": "e",
+                "nova": 3,
+                "ecoscore": "f",
+                "nutrientLevels": {
+                    "fat": "high",
+                    "salt": "low",
+                    "saturated-fat": "high",
+                    "sugars": "high"
+                },
+                "nutrientShape": "sugars{bare,100g,unit,value} salt{bare,100g,unit,value} sodium{bare,100g,modifier,unit,value} fat{bare,100g,unit,value} saturated-fat{bare,100g,unit,value} energy-kcal{bare,100g,unit,value} energy-kj{bare,100g,unit,value} energy{bare,100g,unit,value}",
+                "additives": [],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_unit",
+                    "energy_unit",
+                    "fat_unit",
+                    "fiber_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_modifier",
+                    "sodium_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "20724696",
+            "file": "20724696.json",
+            "scenario": "grade-a-full-nutrition",
+            "why": "Nutri-Score a, Nova 1 and 89 nutriment keys. No organic label, so the grade maps to score 100 without the organic bonus. Eco-Score d exercises the accepted path.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Amandes décortiquées",
+                "brands": "Alesto",
+                "grade": "a",
+                "nova": 1,
+                "ecoscore": "d",
+                "nutrientLevels": {
+                    "fat": "high",
+                    "salt": "low",
+                    "saturated-fat": "moderate",
+                    "sugars": "low"
+                },
+                "nutrientShape": "sugars{bare,100g,serving,unit,value} salt{bare,100g,serving,unit,value} sodium{bare,100g,serving,unit,value} fat{bare,100g,serving,unit,value} saturated-fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,modifier,serving,unit,value} energy{bare,100g,modifier,serving,unit,value}",
+                "additives": [],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "carbohydrates_unit",
+                    "choline_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_modifier",
+                    "energy-kj_unit",
+                    "energy_modifier",
+                    "energy_unit",
+                    "fat_unit",
+                    "fiber_unit",
+                    "fruits-vegetables-nuts_unit",
+                    "magnesium_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_unit",
+                    "starch_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "5449000000996",
+            "file": "5449000000996.json",
+            "scenario": "beverage",
+            "why": "Drink with sugars high and salt/fat low, two real additives, kcal and kJ energy, and a 'not-applicable' Eco-Score that the parser must drop rather than store.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Coca-Cola Original",
+                "brands": "COCA-COLA SERVICES SA/NV",
+                "grade": "e",
+                "nova": 4,
+                "ecoscore": "not-applicable",
+                "nutrientLevels": {
+                    "fat": "low",
+                    "salt": "low",
+                    "saturated-fat": "low",
+                    "sugars": "high"
+                },
+                "nutrientShape": "sugars{bare,100g,serving,unit,value} salt{bare,100g,serving,unit,value} sodium{bare,100g,serving,unit,value} fat{bare,100g,serving,unit,value} saturated-fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,serving,unit,value} energy{bare,100g,serving,unit,value}",
+                "additives": [
+                    "en:e150d:1",
+                    "en:e338:2"
+                ],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_unit",
+                    "energy_unit",
+                    "fat_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "6111242101180",
+            "file": "6111242101180.json",
+            "scenario": "unknown-grade-partial-nutrition",
+            "why": "Nutri-Score 'unknown' while only fat and energy are filled in. Checks that missing sugars/salt/saturated-fat become question marks instead of zero, and that an unknown grade still renders a full card.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Lait entier UHT",
+                "brands": "Jaouda",
+                "grade": "unknown",
+                "nova": 1,
+                "ecoscore": "c",
+                "nutrientLevels": {
+                    "fat": "moderate",
+                    "salt": "low",
+                    "saturated-fat": "moderate",
+                    "sugars": "low"
+                },
+                "nutrientShape": "fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,modifier,serving,unit,value} energy{bare,100g,modifier,serving,unit,value}",
+                "additives": [],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "alcohol_unit",
+                    "calcium_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_modifier",
+                    "energy-kj_unit",
+                    "energy_modifier",
+                    "energy_unit",
+                    "fat_unit",
+                    "proteins_unit"
+                ]
+            }
+        },
+        {
+            "code": "6111035002175",
+            "file": "6111035002175.json",
+            "scenario": "levels-without-nutriments",
+            "why": "nutrient_levels is fully populated but the nutriment map only has minerals and zero added sugars - none of the four displayed nutrients. The UI must show coloured levels with '?' values rather than claiming zeros, and calories must report unavailable.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Eau minérale naturelle",
+                "brands": "Sidi Ali",
+                "grade": "a",
+                "nova": 1,
+                "ecoscore": "not-applicable",
+                "nutrientLevels": {
+                    "fat": "low",
+                    "salt": "low",
+                    "saturated-fat": "low",
+                    "sugars": "low"
+                },
+                "nutrientShape": "",
+                "additives": [],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "bicarbonate_unit",
+                    "calcium_unit",
+                    "manganese_unit",
+                    "potassium_unit"
+                ]
+            }
+        },
+        {
+            "code": "6111252421568",
+            "file": "6111252421568.json",
+            "scenario": "no-nova",
+            "why": "No nova_group at all and a non-Latin product name. Nova must stay undefined and the name must survive parsing.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "اكوافينا",
+                "brands": "AQUAFINA",
+                "grade": "a",
+                "nova": null,
+                "ecoscore": "not-applicable",
+                "nutrientLevels": {
+                    "fat": "low",
+                    "salt": "low",
+                    "saturated-fat": "low",
+                    "sugars": "low"
+                },
+                "nutrientShape": "sugars{bare,100g,serving,unit,value} salt{bare,100g,serving,unit,value} sodium{bare,100g,serving,unit,value} fat{bare,100g,serving,unit,value} saturated-fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,serving,unit,value} energy{bare,100g,serving,unit,value}",
+                "additives": [],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "alcohol_unit",
+                    "bicarbonate_unit",
+                    "calcium_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_unit",
+                    "energy_unit",
+                    "fat_unit",
+                    "fiber_unit",
+                    "fluoride_unit",
+                    "iron_unit",
+                    "magnesium_unit",
+                    "ph_modifier",
+                    "potassium_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "3760049790214",
+            "file": "3760049790214.json",
+            "scenario": "organic-ecoscore-a-plus",
+            "why": "Organic label, middling Nutri-Score c, and a real ecoscore_grade of 'a-plus' that the current parser silently drops. Pins both the organic bonus and the wider Eco-Score vocabulary.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Pain De Mie Bio",
+                "brands": "La Boulangère, La Boulangère Bio, La Boulangère",
+                "grade": "c",
+                "nova": 4,
+                "ecoscore": "a-plus",
+                "nutrientLevels": {
+                    "fat": "moderate",
+                    "salt": "moderate",
+                    "saturated-fat": "low",
+                    "sugars": "moderate"
+                },
+                "nutrientShape": "sugars{bare,100g,serving,unit,value} salt{bare,100g,serving,unit,value} sodium{bare,100g,modifier,serving,unit,value} fat{bare,100g,serving,unit,value} saturated-fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,serving,unit,value} energy{bare,100g,serving,unit,value}",
+                "additives": [],
+                "organic": true,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_unit",
+                    "energy_unit",
+                    "fat_unit",
+                    "fiber_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_modifier",
+                    "sodium_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "6111250470209",
+            "file": "6111250470209.json",
+            "scenario": "no-nutrition-minimal",
+            "why": "Nutriment map contains only zero added sugars and ingredient-estimate keys; nutrient_levels is absent and the grade is unknown. Every nutrient row must read '?' and calories must be unavailable, without NaN leaking into the UI.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "VIP Gold café instantané",
+                "brands": "VIP",
+                "grade": "unknown",
+                "nova": 1,
+                "ecoscore": "unknown",
+                "nutrientLevels": {},
+                "nutrientShape": "",
+                "additives": [],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "3095758049019",
+            "file": "3095758049019.json",
+            "scenario": "hazardous-additive",
+            "why": "Real product carrying en:e250 (risk 3) among two additives. Exercises the hazardous cap in app mode and the risk badge lookup.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Le Torchon - Cuit à l'Etouffée  - 25% de sel*",
+                "brands": "Fleury Michon",
+                "grade": "c",
+                "nova": 4,
+                "ecoscore": "e",
+                "nutrientLevels": {
+                    "fat": "low",
+                    "salt": "moderate",
+                    "saturated-fat": "low",
+                    "sugars": "low"
+                },
+                "nutrientShape": "sugars{bare,100g,serving,unit,value} salt{bare,100g,serving,unit,value} sodium{bare,100g,serving,unit,value} fat{bare,100g,serving,unit,value} saturated-fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,serving,unit,value} energy{bare,100g,serving,unit,value}",
+                "additives": [
+                    "en:e250:3",
+                    "en:e301:0"
+                ],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_unit",
+                    "energy_unit",
+                    "fat_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "0182866962187",
+            "file": "0182866962187.json",
+            "scenario": "missing-name-and-image",
+            "why": "No product_name, no image_front_url or image_url, but complete nutrition and a grade. The card must fall back to placeholders when there is nothing to show.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "",
+                "brands": "",
+                "grade": "b",
+                "nova": 1,
+                "ecoscore": "d",
+                "nutrientLevels": {
+                    "fat": "low",
+                    "salt": "low",
+                    "saturated-fat": "low",
+                    "sugars": "low"
+                },
+                "nutrientShape": "sugars{bare,100g,unit,value} salt{bare,100g,unit,value} sodium{bare,100g,unit,value} fat{bare,100g,unit,value} saturated-fat{bare,100g,unit,value} energy-kcal{bare,100g,unit,value} energy-kj{bare,100g,modifier,unit,value} energy{bare,100g,modifier,unit,value}",
+                "additives": [],
+                "organic": false,
+                "image": false,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_modifier",
+                    "energy-kj_unit",
+                    "energy_modifier",
+                    "energy_unit",
+                    "fat_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "0040600022651",
+            "file": "0040600022651.json",
+            "scenario": "partial-nutrient-levels",
+            "why": "nutrient_levels covers fat, saturated-fat and sugars but omits salt, while nutriments still carry those values. Checks per-field level fallback instead of all-or-nothing.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Lindt Excellence",
+                "brands": "Lindt Excellence",
+                "grade": "unknown",
+                "nova": null,
+                "ecoscore": "unknown",
+                "nutrientLevels": {
+                    "fat": "high",
+                    "saturated-fat": "high",
+                    "sugars": "high"
+                },
+                "nutrientShape": "sugars{bare,100g,serving,unit,value} fat{bare,100g,serving,unit,value} saturated-fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,modifier,serving,unit,value} energy{bare,100g,modifier,serving,unit,value}",
+                "additives": [],
+                "organic": false,
+                "image": false,
+                "ingredients": false,
+                "prepared": false,
+                "stringValues": [
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_modifier",
+                    "energy-kj_unit",
+                    "energy_modifier",
+                    "energy_unit",
+                    "fat_unit",
+                    "proteins_unit",
+                    "saturated-fat_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "8052575090254",
+            "file": "8052575090254.json",
+            "scenario": "organic-grade-e",
+            "why": "Organic label on a Nutri-Score e product with two additive tags. The organic bonus must be visible in the reasons yet cannot lift a poor grade above the hazardous cap rule.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "Rigoni di Asiago - Nocciolata bio",
+                "brands": "Rigoni di Asiago",
+                "grade": "e",
+                "nova": 4,
+                "ecoscore": "c",
+                "nutrientLevels": {
+                    "fat": "high",
+                    "salt": "low",
+                    "saturated-fat": "high",
+                    "sugars": "high"
+                },
+                "nutrientShape": "sugars{bare,100g,unit,value} salt{bare,100g,unit,value} sodium{bare,100g,unit,value} fat{bare,100g,unit,value} saturated-fat{bare,100g,unit,value} energy-kcal{bare,100g,unit,value} energy-kj{bare,100g,unit,value} energy{bare,100g,unit,value}",
+                "additives": [
+                    "en:e322:0",
+                    "en:e322i:0"
+                ],
+                "organic": true,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_unit",
+                    "carbohydrates_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_unit",
+                    "energy_unit",
+                    "fat_unit",
+                    "fiber_unit",
+                    "proteins_unit",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_unit",
+                    "sugars_unit"
+                ]
+            }
+        },
+        {
+            "code": "0811620022118",
+            "file": "0811620022118.json",
+            "scenario": "grade-not-applicable-many-additives",
+            "why": "A real 'not-applicable' Nutri-Score with six additives and full nutrition. Checks that the out-of-union grade maps to unknown and that a long additive list cannot drive the score below zero.",
+            "httpStatus": 200,
+            "summary": {
+                "found": true,
+                "name": "High Quality Protein",
+                "brands": "fairlife",
+                "grade": "not-applicable",
+                "nova": 4,
+                "ecoscore": "unknown",
+                "nutrientLevels": {
+                    "fat": "low",
+                    "salt": "low",
+                    "saturated-fat": "low",
+                    "sugars": "low"
+                },
+                "nutrientShape": "sugars{bare,100g,serving,unit,value} salt{bare,100g,modifier,serving,unit,value} sodium{bare,100g,serving,unit,value} fat{bare,100g,serving,unit,value} saturated-fat{bare,100g,serving,unit,value} energy-kcal{bare,100g,serving,unit,value} energy-kj{bare,100g,modifier,serving,unit,value} energy{bare,100g,modifier,serving,unit,value}",
+                "additives": [
+                    "en:e407:2",
+                    "en:e460:0",
+                    "en:e466:0",
+                    "en:e950:2",
+                    "en:e955:2",
+                    "en:e960:2"
+                ],
+                "organic": false,
+                "image": true,
+                "ingredients": true,
+                "prepared": false,
+                "stringValues": [
+                    "added-sugars_modifier",
+                    "added-sugars_unit",
+                    "calcium_unit",
+                    "carbohydrates-total_unit",
+                    "carbohydrates_unit",
+                    "chloride_unit",
+                    "cholesterol_unit",
+                    "energy-kcal_unit",
+                    "energy-kj_modifier",
+                    "energy-kj_unit",
+                    "energy_modifier",
+                    "energy_unit",
+                    "fat_unit",
+                    "fiber_unit",
+                    "iodine_unit",
+                    "iron_unit",
+                    "potassium_unit",
+                    "proteins_unit",
+                    "salt_modifier",
+                    "salt_unit",
+                    "saturated-fat_unit",
+                    "sodium_unit",
+                    "sugars_unit",
+                    "trans-fat_unit",
+                    "vitamin-a_unit",
+                    "vitamin-d_unit"
+                ]
+            }
+        }
+    ],
+    "capturedAt": "2026-11-23"
+}
