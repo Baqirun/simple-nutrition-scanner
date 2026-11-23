@@ -1,10 +1,24 @@
 <script lang="ts">
-    import type { Product } from "$lib/types/product";
+    import type { Product, EcoScoreGrade } from "$lib/types/product";
     import type { ProductAnalysis } from "$lib/models/productAnalysis";
     import type { AdditiveRisk } from "$lib/services/additiveService";
     import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
 
     type Props = { item: Product; analysis: ProductAnalysis };    let { item, analysis }: Props = $props();
+
+    const ecoStyles: Record<EcoScoreGrade, { badge: string; label: string }> = {
+        "a-plus": { badge: "bg-green-100 text-green-700", label: "Very low impact" },
+        a: { badge: "bg-green-100 text-green-700", label: "Very low impact" },
+        b: { badge: "bg-lime-100 text-lime-700", label: "Low impact" },
+        c: { badge: "bg-yellow-100 text-yellow-700", label: "Moderate impact" },
+        d: { badge: "bg-orange-100 text-orange-700", label: "High impact" },
+        e: { badge: "bg-red-100 text-red-700", label: "Very high impact" },
+        f: { badge: "bg-red-100 text-red-700", label: "Very high impact" }
+    };
+
+    function ecoGradeLabel(grade: EcoScoreGrade) {
+        return grade === "a-plus" ? "A+" : grade.toUpperCase();
+    }
 
     const novaLabels: Record<number, string> = {
         1: 'Unprocessed',
@@ -44,14 +58,15 @@
          {/if}
 
          {#if item.product.ecoscore_grade}
+         {@const eco = ecoStyles[item.product.ecoscore_grade]}
          <div class="flex items-center justify-between text-sm">
              <div class="flex items-center gap-3">
-                 <div class="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-sm font-bold text-green-700 uppercase">
-                     {item.product.ecoscore_grade}
+                 <div class="w-8 h-8 rounded-lg {eco.badge} flex items-center justify-center text-sm font-bold uppercase">
+                     {ecoGradeLabel(item.product.ecoscore_grade)}
                  </div>
                  <span class="font-medium">Eco-Score</span>
              </div>
-             <span class="text-xs opacity-50 uppercase">{item.product.ecoscore_grade === 'a' ? 'Very low impact' : 'Environmental impact'}</span>
+             <span class="text-xs opacity-50 uppercase">{eco.label}</span>
          </div>
          {/if}
 

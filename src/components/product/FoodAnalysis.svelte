@@ -68,7 +68,7 @@
                     </div>
                     <div class="flex flex-col items-center">
                         <div class="flex flex-row gap-2">
-                            <span class="font-black uppercase">{point.value} {point.unit}</span>
+                            <span class="font-black uppercase">{point.value}{point.value === "?" ? "" : ` ${point.unit}`}</span>
                             <div class="rounded-full w-2 h-2 my-auto {point.color}"></div>
                         </div>
                         <span class="text-xs uppercase opacity-75">{point.level}</span>

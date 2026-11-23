@@ -264,8 +264,8 @@ describe("captured payload scenarios", () => {
         expect(analysis.rating.grade).toBe("?");
     });
 
-    it("maps a real 'not-applicable' grade to unknown without rewriting the stored value", () => {
-        expect(productOf("0811620022118").product.nutriscore_grade as string).toBe("not-applicable");
+    it("normalises a real 'not-applicable' grade to unknown at parse time", () => {
+        expect(productOf("0811620022118").product.nutriscore_grade).toBe("unknown");
         expect(analysisOf("0811620022118", "nutriscore").nutriscoreGrade).toBe("unknown");
         expect(analysisOf("0811620022118", "nutriscore").score).toBe(0);
     });
@@ -290,14 +290,15 @@ describe("captured payload scenarios", () => {
         expect(analysis.calories.value).toBe(566);
     });
 
-    it("currently rejects the wider Eco-Score vocabulary the API really emits", () => {
+    it("keeps the wider Eco-Score vocabulary the API really emits", () => {
         // The raw payloads are the evidence: 'f' and 'a-plus' are real values.
         expect(rawProductOf("3017620422003").ecoscore_grade).toBe("f");
         expect(rawProductOf("3760049790214").ecoscore_grade).toBe("a-plus");
 
-        // ...but the a-e union in product.ts drops them, so nothing is displayed.
-        expect(productOf("3017620422003").product.ecoscore_grade).toBeUndefined();
-        expect(productOf("3760049790214").product.ecoscore_grade).toBeUndefined();
+        expect(productOf("3017620422003").product.ecoscore_grade).toBe("f");
+        expect(productOf("3760049790214").product.ecoscore_grade).toBe("a-plus");
+
+        // Non-grades are still dropped, and a normal letter still survives.
         expect(productOf("5449000000996").product.ecoscore_grade).toBeUndefined();
         expect(productOf("20724696").product.ecoscore_grade).toBe("d");
     });

@@ -100,4 +100,28 @@ describe("parseProductPayload", () => {
 
         expect(result.product.product.ecoscore_grade).toBe("b");
     });
+
+    it.each<[string, string]>([["f", "f"], ["a-plus", "a-plus"], ["a+", "a-plus"], [" A-PLUS ", "a-plus"]])(
+        "keeps the real Green-Score vocabulary value %s",
+        (value, expected) => {
+            const result = parseProductPayload(envelope({ ecoscore_grade: value }));
+
+            expect(result.type).toBe("product");
+            if (result.type !== "product") return;
+
+            expect(result.product.product.ecoscore_grade).toBe(expected);
+        }
+    );
+
+    it.each([["not-applicable"], ["unknown"], [""], [undefined]])(
+        "normalises the non-grade Nutri-Score %s to unknown",
+        value => {
+            const result = parseProductPayload(envelope({ nutriscore_grade: value }));
+
+            expect(result.type).toBe("product");
+            if (result.type !== "product") return;
+
+            expect(result.product.product.nutriscore_grade).toBe("unknown");
+        }
+    );
 });

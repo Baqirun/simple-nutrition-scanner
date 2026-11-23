@@ -57,7 +57,7 @@ export function parseProductPayload(payload: unknown): ParseResult {
             brands: source.brands,
             image_url: source.image_url,
             image_front_url: source.image_front_url,
-            nutriscore_grade: source.nutriscore_grade?.toLowerCase() as Product["product"]["nutriscore_grade"],
+            nutriscore_grade: toNutriScoreGrade(source.nutriscore_grade),
             nutriscore_score: source.nutriscore_score,
             nova_group: source.nova_group,
             ecoscore_grade: toEcoScoreGrade(source.ecoscore_grade),
@@ -78,15 +78,33 @@ function normaliseCode(value: unknown): string {
     return String(value).trim();
 }
 
-const ECO_SCORE_GRADES = ["a", "b", "c", "d", "e"] as const;
+const NUTRI_SCORE_GRADES = ["a", "b", "c", "d", "e"] as const;
 
 /**
- * Open Food Facts reports `unknown`, `not-applicable` or an empty string when no
- * Eco-Score exists. Those are not grades, so they are dropped rather than stored
- * and rendered as a letter in the UI.
+ * Open Food Facts answers with `unknown`, `not-applicable` or an empty grade
+ * for non-food products and incomplete entries. Only a real letter is a grade;
+ * everything else is stored as `unknown` so the type matches the data.
  */
-function toEcoScoreGrade(value: string | undefined): Product["product"]["ecoscore_grade"] {
-    const grade = value?.trim().toLowerCase();
+function toNutriScoreGrade(value: unknown): Product["product"]["nutriscore_grade"] {
+    const grade = typeof value === "string" ? value.trim().toLowerCase() : "";
+    return NUTRI_SCORE_GRADES.includes(grade as (typeof NUTRI_SCORE_GRADES)[number])
+        ? (grade as Product["product"]["nutriscore_grade"])
+        : "unknown";
+}
+
+const ECO_SCORE_GRADES = ["a-plus", "a", "b", "c", "d", "e", "f"] as const;
+
+/**
+ * Open Food Facts publishes the Green-Score from A+ to F: the v2 field can be
+ * `a-plus` or `a+` for the top grade. `unknown`, `not-applicable` and empty
+ * strings are not grades, so they are dropped rather than stored and rendered.
+ */
+function toEcoScoreGrade(value: unknown): Product["product"]["ecoscore_grade"] {
+    if (typeof value !== "string") return undefined;
+
+    const raw = value.trim().toLowerCase();
+    const grade = raw === "a+" ? "a-plus" : raw;
+
     return ECO_SCORE_GRADES.includes(grade as (typeof ECO_SCORE_GRADES)[number])
         ? (grade as Product["product"]["ecoscore_grade"])
         : undefined;

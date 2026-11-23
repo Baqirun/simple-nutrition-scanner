@@ -1,8 +1,8 @@
 export type NutriScoreGrade =
     "a" | "b" | "c" | "d" | "e" | "unknown";
 
-/** Eco-Score letters as published by Open Food Facts; non-grades are dropped at parse time. */
-export type EcoScoreGrade = "a" | "b" | "c" | "d" | "e";
+/** Eco-Score letters as published by Open Food Facts, from the top A+ grade to F. */
+export type EcoScoreGrade = "a-plus" | "a" | "b" | "c" | "d" | "e" | "f";
 
 export type NutrientLevel = "low" | "moderate" | "high";
 

@@ -264,11 +264,11 @@ Conventions to follow when adding tests:
    than mutating global settings, so tests stay order-independent.
 4. Keep live tests in a `*.live.test.ts` file so they can be excluded offline.
 
-The real fixtures intentionally pin current quirks, not ideals. Two known
-gaps they document: the API emits Eco-Score values (`f`, `a-plus`,
-`not-applicable`) outside the `a-e` union, and a product with no nutrition data
-still reaches an app score of 30 (rating E). Treat those assertions as
-characterization tests to update deliberately.
+The real fixtures pin current behaviour. The parser now keeps the full
+Green-Score vocabulary (`a-plus` through `f`) and normalises
+`unknown`/`not-applicable` Nutri-Scores to `unknown`. A product with no
+nutrition data still reaches an app score of 30 (rating E); that remains a
+characterization test to review deliberately.
 
 The app calls the **deprecated v2** endpoints. v3.6 is the current API but
 changes the envelope (`status: "success"`, `result`/`errors`), renames
