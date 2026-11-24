@@ -1,16 +1,28 @@
-import type { QuaggaJSConfigObject } from '@ericblade/quagga2'
+import type { ReaderOptions } from "zxing-wasm/reader";
 
-export const scannerConfig: QuaggaJSConfigObject = {
-    inputStream: {
-        type: "LiveStream",
-        target: undefined,
-        constraints: {
-            facingMode: "environment",
-            aspectRatio: { min: 1, max: 2 }
-        },
+export const cameraConstraints: MediaStreamConstraints = {
+    audio: false,
+    video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 1280 },
+        height: { ideal: 960 },
     },
-    decoder: {
-        readers: ["ean_reader", "ean_8_reader", "upc_reader"]
-    },
-    locate: true
+};
+
+export const CAMERA_MAX_FRAME_SIZE = 1280;
+
+export const liveReaderOptions: ReaderOptions = {
+    formats: ["EANUPC"],
+    maxNumberOfSymbols: 1,
+    tryHarder: false,
+    textMode: "Plain",
+    eanAddOnSymbol: "Ignore",
+};
+
+export const imageReaderOptions: ReaderOptions = {
+    formats: ["EANUPC"],
+    maxNumberOfSymbols: 1,
+    tryHarder: true,
+    textMode: "Plain",
+    eanAddOnSymbol: "Ignore",
 };

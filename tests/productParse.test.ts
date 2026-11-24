@@ -30,7 +30,20 @@ describe("parseProductPayload", () => {
         if (result.type !== "product") return;
 
         expect(Object.keys(result.product).sort()).toEqual(["code", "product"]);
-        expect(result.product.product.nutriments["sugars_100g"]).toBe(56.3);
+        expect(result.product.product.nutrition?.sugars).toEqual({ value: 56.3, unit: "g" });
+        expect(result.product.product.nutrition?.energyKcal).toBe(539);
+        expect(result.product.product.nutriments).toBeUndefined();
+    });
+
+    it("always stores grams for per-100g nutrients even when the raw unit is mg", () => {
+        const result = parseProductPayload(
+            envelope({ nutriments: { salt_100g: 0.5, salt_value: 500, salt_unit: "mg" } })
+        );
+
+        expect(result.type).toBe("product");
+        if (result.type !== "product") return;
+
+        expect(result.product.product.nutrition?.salt).toEqual({ value: 0.5, unit: "g" });
     });
 
     it("normalises an upper-case grade and a numeric code", () => {

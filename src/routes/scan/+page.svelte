@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { Scanner } from '$lib/ui/scanner.svelte';
+    import { Torch } from '$lib/ui/torch.svelte';
     import Alert from "$components/alert.svelte";
     import ScanOverlay from '$components/Scanner/ScanOverlay.svelte';
     import ButtonFileScan from '$components/Scanner/ButtonFileScan.svelte';
@@ -9,7 +10,10 @@
     let scannerContainer: HTMLDivElement;
 
     onMount(() => Scanner.start(scannerContainer));
-    onDestroy(() => Scanner.stop());
+    onDestroy(() => {
+        Scanner.stop();
+        Torch.reset();
+    });
 </script>
 
 <Alert />

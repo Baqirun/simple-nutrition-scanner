@@ -1,4 +1,4 @@
-import type { Product } from "$lib/types/product";
+import type { NutrientMeasurement, Product, ProductNutrition, TrackedNutrientId } from "$lib/types/product";
 
 /**
  * Result of reading one Open Food Facts `/api/v2/product/{code}.json` body.
@@ -66,7 +66,7 @@ export function parseProductPayload(payload: unknown): ParseResult {
             additives_tags: source.additives_tags ?? [],
             labels_tags: source.labels_tags ?? [],
             nutrient_levels: source.nutrient_levels ?? {},
-            nutriments: source.nutriments ?? {}
+            nutrition: extractV2Nutrition(source.nutriments)
         }
     };
 
@@ -108,4 +108,77 @@ function toEcoScoreGrade(value: unknown): Product["product"]["ecoscore_grade"] {
     return ECO_SCORE_GRADES.includes(grade as (typeof ECO_SCORE_GRADES)[number])
         ? (grade as Product["product"]["ecoscore_grade"])
         : undefined;
+}
+
+const KJ_TO_KCAL = 0.239;
+const TRACKED_NUTRIENTS: readonly TrackedNutrientId[] = ["sugars", "salt", "saturated-fat", "fat"];
+
+/**
+ * Normalises the flat Open Food Facts v2 `nutriments` dictionary into the
+ * internal API-version-agnostic `ProductNutrition` shape. Also used as a
+ * fallback for legacy IndexedDB rows cached before `nutrition` existed.
+ */
+export function extractV2Nutrition(nutriments: Record<string, number | string> | undefined): ProductNutrition {
+    if (!nutriments) return {};
+
+    const result: ProductNutrition = {};
+    const energyKcal = readV2EnergyKcal(nutriments);
+    if (energyKcal !== undefined) result.energyKcal = energyKcal;
+
+    for (const id of TRACKED_NUTRIENTS) {
+        const measurement = readV2Nutrient(nutriments, id);
+        if (measurement !== undefined) result[id] = measurement;
+    }
+
+    return result;
+}
+
+function readV2Nutrient(
+    nutriments: Record<string, number | string>,
+    id: TrackedNutrientId
+): NutrientMeasurement | undefined {
+    // Per Open Food Facts spec, `*_100g`, `*_prepared_100g`, and the base key are always
+    // normalised to grams for weight-based nutrients; only `*_value` uses `*_unit`.
+    for (const key of [`${id}_100g`, `${id}_prepared_100g`, id] as const) {
+        const parsed = toFiniteNumber(nutriments[key]);
+        if (parsed !== undefined) {
+            return { value: parsed, unit: "g" };
+        }
+    }
+
+    const rawValue = toFiniteNumber(nutriments[`${id}_value`]);
+    if (rawValue !== undefined) {
+        const rawUnit = nutriments[`${id}_unit`];
+        const unit = typeof rawUnit === "string" ? rawUnit.trim() : rawUnit !== undefined ? String(rawUnit).trim() : "";
+        return { value: rawValue, unit: unit || "g" };
+    }
+
+    return undefined;
+}
+
+function readV2EnergyKcal(nutriments: Record<string, number | string>): number | undefined {
+    const candidates: Array<[string, number]> = [
+        ["energy-kcal_100g", 1],
+        ["energy-kcal_prepared_100g", 1],
+        ["energy-kj_100g", KJ_TO_KCAL],
+        ["energy-kj_prepared_100g", KJ_TO_KCAL],
+        ["energy_100g", KJ_TO_KCAL]
+    ];
+
+    for (const [key, factor] of candidates) {
+        const parsed = toFiniteNumber(nutriments[key]);
+        if (parsed !== undefined) {
+            return parsed * factor;
+        }
+    }
+
+    return undefined;
+}
+
+/** Open Food Facts publishes numbers as numbers *and* as numeric strings. */
+function toFiniteNumber(raw: number | string | undefined): number | undefined {
+    if (raw === undefined || raw === null || raw === "") return undefined;
+
+    const parsed = typeof raw === "number" ? raw : Number.parseFloat(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
 }

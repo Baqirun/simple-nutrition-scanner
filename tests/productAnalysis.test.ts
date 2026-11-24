@@ -166,6 +166,16 @@ describe("ProductAnalysis", () => {
             expect(analysis.score).toBe(70);
         });
 
+        it("does not treat non-organic tags as organic", () => {
+            const analysis = new ProductAnalysis(
+                product({ nutriscore_grade: "c", labels_tags: ["en:non-organic"] }),
+                { useCustomScore: "app" }
+            );
+
+            expect(analysis.isOrganic).toBe(false);
+            expect(analysis.score).toBe(60);
+        });
+
         it("keeps a rated grade-e product at grade E even when score clamps to zero", () => {
             const analysis = new ProductAnalysis(
                 product({ nutriscore_grade: "e", additives_tags: ["en:e202", "en:e202"] }),
@@ -267,6 +277,29 @@ describe("ProductAnalysis", () => {
             expect(analysis.nutrients.find(row => row.id === "fat")).toMatchObject({ value: null, level: undefined });
             expect(analysis.hasNutrientData).toBe(false);
         });
+
+        it("keeps per-100g values in grams even when raw _unit is mg", () => {
+            const analysis = new ProductAnalysis(
+                product({ nutriments: { salt_100g: 0.5, salt_value: 500, salt_unit: "mg" } }),
+                { useCustomScore: "app" }
+            );
+
+            expect(analysis.nutrients.find(row => row.id === "salt")).toMatchObject({ value: "0.5", unit: "g" });
+        });
+
+        it("still reads legacy IndexedDB rows that only have raw nutriments", () => {
+            const legacy: Product = {
+                code: "1234567890123",
+                product: {
+                    product_name: "Legacy row",
+                    nutriments: { sugars_100g: 12.4, "energy-kcal_100g": 210 }
+                }
+            };
+            const analysis = new ProductAnalysis(legacy, { useCustomScore: "nutriscore" });
+
+            expect(analysis.nutrients.find(row => row.id === "sugars")).toMatchObject({ value: "12.4", unit: "g" });
+            expect(analysis.calories).toEqual({ value: 210, unit: "kcal", available: true });
+        });
     });
 
     describe("calories", () => {
@@ -301,6 +334,12 @@ describe("ProductAnalysis", () => {
             expect(new ProductAnalysis(product({ image_url: "https://example.test/x.jpg" })).imageUrl).toBe(
                 "https://example.test/x.jpg"
             );
+        });
+
+        it("exposes ecoscoreGrade including the full Green-Score vocabulary", () => {
+            expect(new ProductAnalysis(product({ ecoscore_grade: "f" })).ecoscoreGrade).toBe("f");
+            expect(new ProductAnalysis(product({ ecoscore_grade: "a+" })).ecoscoreGrade).toBe("a-plus");
+            expect(new ProductAnalysis(product({ ecoscore_grade: "unknown" })).ecoscoreGrade).toBeUndefined();
         });
 
         it("prefers the English ingredients text", () => {

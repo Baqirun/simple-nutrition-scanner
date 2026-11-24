@@ -6,6 +6,18 @@ export type EcoScoreGrade = "a-plus" | "a" | "b" | "c" | "d" | "e" | "f";
 
 export type NutrientLevel = "low" | "moderate" | "high";
 
+export type TrackedNutrientId = "sugars" | "salt" | "saturated-fat" | "fat";
+
+export type NutrientMeasurement = {
+    value: number;
+    unit: string;
+};
+
+/** API-version-agnostic per-100g/100ml nutrition summary consumed by ProductAnalysis. */
+export type ProductNutrition = {
+    energyKcal?: number;
+} & Partial<Record<TrackedNutrientId, NutrientMeasurement>>;
+
 /**
  * Which formula produces the displayed score. `"app"` is the additive-aware
  * App Analysis; `"nutriscore"` mirrors the published Nutri-Score grade.
@@ -35,6 +47,8 @@ export type Product = {
             "saturated-fat"?: NutrientLevel;
             sugars?: NutrientLevel;
         };
-        nutriments: Record<string, number | string>;
+        nutrition?: ProductNutrition;
+        /** Legacy raw v2 nutriments map kept optional so previously cached IndexedDB rows still render. */
+        nutriments?: Record<string, number | string>;
     };
 }

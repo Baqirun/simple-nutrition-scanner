@@ -38,11 +38,24 @@ class ScannerController {
         this.isProcessing = false;
     }
 
+    setTorch(enabled: boolean) {
+        return this.#engine.setTorch(enabled);
+    }
+
     async processImage(file: File | null) {
         if (this.isProcessing || !file) return;
 
-        logger.log("[scanner] process image: "+ file.name)
-        const code = await this.#engine.decodeImage(file);
+        logger.log("[scanner] process image: " + file.name);
+
+        let code: string | null = null;
+
+        try {
+            code = await this.#engine.decodeImage(file);
+        } catch (error) {
+            logger.error("[scanner] image decode failed", error);
+            ui.show("Could not read that image", "error");
+            return;
+        }
 
         if (!code) {
             ui.show("No barcode detected", "warning");
@@ -107,6 +120,10 @@ class ScannerController {
             ui.show("Camera permission denied", "error");
         else if (error?.name === "NotFoundError")
             ui.show("No camera found", "error");
+        else if (error?.name === "NotReadableError")
+            ui.show("Camera is in use by another app", "error");
+        else if (error?.name === "NotSupportedError")
+            ui.show(error.message, "error");
         else ui.show("Camera error", "error");
     }
 }

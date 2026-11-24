@@ -7,7 +7,7 @@ A Yuka-like Progressive Web App (PWA) built with **Svelte 5** and **SvelteKit** 
 - **Framework:** Svelte 5 (with runes) + SvelteKit
 - **Language:** TypeScript (strict mode)
 - **Styling:** Tailwind CSS v4 + DaisyUI v5
-- **Barcode Scanning:** Quagga2 (`@ericblade/quagga2`)
+- **Barcode Scanning:** zxing-wasm (`zxing-wasm/reader`, ZXing-C++ WebAssembly)
 - **Database:** IndexedDB via Dexie.js
 - **Package Manager:** npm or bun
 
@@ -149,7 +149,7 @@ src/lib/
 │   └── theme.svelte.ts     # Export: export const theme = new ThemeController()
 ├── services/     # Business logic (class-based, injected dependencies)
 │   ├── productService.ts   # ProductService class
-│   └── scannerEngine.ts    # ScannerEngine class
+│   └── scannerEngine.ts    # getUserMedia + zxing-wasm frame loop
 ├── types/        # Shared TypeScript types
 └── models/       # Data transformation/analysis classes
 ```
@@ -221,6 +221,8 @@ export const Scanner = new ScannerController(); // Singleton export
 | File | Purpose |
 |------|---------|
 | `src/lib/ui/scanner.svelte.ts` | Scanning lifecycle controller |
+| `src/lib/services/scannerEngine.ts` | Camera stream, frame loop, zxing-wasm decoding, torch |
+| `src/lib/config/scanner.ts` | Camera constraints + zxing reader options |
 | `src/lib/services/productService.ts` | API lookup orchestration |
 | `src/lib/services/productRepository.ts` | Dexie persistence layer |
 | `src/lib/services/api/productParse.ts` | Open Food Facts response → `Product` parsing |
@@ -230,6 +232,11 @@ export const Scanner = new ScannerController(); // Singleton export
 | `src/service-worker.ts` | PWA offline caching |
 | `svelte.config.js` | SvelteKit + path aliases |
 | `vitest.config.ts` | Test runner / SvelteKit alias resolution |
+
+The zxing wasm binary is imported with `?url`, so Vite emits it into
+`build/_app/immutable/assets/` and `src/service-worker.ts` precaches it with the
+rest of the build output. Keep it local: the library's default jsDelivr CDN
+fallback would break offline scanning.
 
 ---
 

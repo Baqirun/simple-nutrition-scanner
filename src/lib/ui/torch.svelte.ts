@@ -1,6 +1,6 @@
 import { ui } from "$lib/ui/alert.svelte";
 import { logger } from "$lib/ui/logger.svelte";
-import Quagga from "@ericblade/quagga2";
+import { Scanner } from "$lib/ui/scanner.svelte";
 
 class ToggleTorch {
     // Use the $state rune for reactive UI updates
@@ -14,9 +14,13 @@ class ToggleTorch {
         }
     }
 
+    reset() {
+        this.torchEnabled = false;
+    }
+
     async #enable() {
         try {
-            await Quagga.CameraAccess.enableTorch();
+            await Scanner.setTorch(true);
             this.torchEnabled = true;
         } catch (error) {
             this.torchEnabled = false;
@@ -26,7 +30,7 @@ class ToggleTorch {
 
     async #disable() {
         try {
-            await Quagga.CameraAccess.disableTorch();
+            await Scanner.setTorch(false);
             this.torchEnabled = false;
         } catch (error) {
             this.torchEnabled = false;
@@ -34,9 +38,9 @@ class ToggleTorch {
         }
     }
 
-    async #handleError(error: any) {
-        logger.error('Torch control failed:', error);
-        ui.show('Torch not available on this device',"error");
+    #handleError(error: any) {
+        logger.error("Torch control failed:", error);
+        ui.show("Torch not available on this device", "error");
     }
 }
 

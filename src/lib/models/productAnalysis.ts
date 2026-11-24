@@ -1,5 +1,6 @@
-import type { EcoScoreGrade, NutriScoreGrade, NutrientLevel, Product } from "$lib/types/product";
+import type { EcoScoreGrade, NutriScoreGrade, NutrientLevel, Product, ProductNutrition } from "$lib/types/product";
 import { additives, type AdditiveImpact, type AdditiveInfo } from "$lib/services/additiveService";
+import { extractV2Nutrition } from "$lib/services/api/productParse";
 import { settings } from "$lib/core/settings.svelte";
 
 export type ScoreFunction = "nutriscore" | "app";
@@ -54,7 +55,6 @@ const RATING_BY_GRADE: Record<NutriScoreGrade, Rating> = {
 const MAX_ADDITIVE_POINTS = 30;
 const ORGANIC_BONUS = 10;
 const HAZARD_CAP = 49;
-const KJ_TO_KCAL = 0.239;
 
 const GRADES: readonly NutriScoreGrade[] = ["a", "b", "c", "d", "e", "unknown"];
 
@@ -71,11 +71,13 @@ const UNKNOWN_REASONS: ScoreReason[] = [
 
 export class ProductAnalysis {
     readonly #product: Product["product"] | undefined;
+    readonly #nutrition: ProductNutrition;
     readonly #scoreFunction: ScoreFunction;
     readonly #additiveImpact: AdditiveImpact;
 
     constructor(item: Product | undefined, options: ScoreOptions = {}) {
         this.#product = item?.product;
+        this.#nutrition = this.#product?.nutrition ?? extractV2Nutrition(this.#product?.nutriments);
         this.#scoreFunction = options.useCustomScore ?? (settings.useCustomScore as ScoreFunction);
         this.#additiveImpact = additives.impact(this.#product?.additives_tags);
     }
@@ -128,7 +130,7 @@ export class ProductAnalysis {
     }
 
     get isOrganic(): boolean {
-        return (this.#product?.labels_tags ?? []).some(label => label.includes("organic"));
+        return (this.#product?.labels_tags ?? []).includes("en:organic");
     }
 
     get isRated(): boolean {
@@ -198,18 +200,17 @@ export class ProductAnalysis {
         if (!this.#product) return [];
 
         const levels = this.#product.nutrient_levels ?? {};
-        const nutriments = this.#product.nutriments ?? {};
 
         return NUTRIENT_CONFIG.map(item => {
             const level = levels[item.id] as NutrientLevel | undefined;
-            const { value, unit } = readNutrient(nutriments, item.id);
+            const measurement = this.#nutrition[item.id];
 
             return {
                 id: item.id,
                 label: item.label,
                 icon: item.icon,
-                value,
-                unit,
+                value: measurement !== undefined ? measurement.value.toFixed(1) : null,
+                unit: measurement !== undefined ? measurement.unit : "g",
                 level
             };
         });
@@ -228,7 +229,11 @@ export class ProductAnalysis {
     }
 
     get calories(): CalorieInfo {
-        return readCalories(this.#product?.nutriments ?? {});
+        const kcal = this.#nutrition.energyKcal;
+        if (kcal === undefined) {
+            return { value: 0, unit: "kcal", available: false };
+        }
+        return { value: Math.round(kcal), unit: "kcal", available: true };
     }
 
     /**
@@ -248,46 +253,4 @@ export class ProductAnalysis {
 
         return Math.min(100, Math.max(0, total));
     }
-}
-
-function readNutrient(nutriments: Record<string, number | string>, id: string): { value: string | null; unit: string } {
-    // Open Food Facts only publishes `_value`/`_unit` for some products (salt and sodium especially)
-    const keys = [`${id}_100g`, `${id}_prepared_100g`, id, `${id}_value`] as const;
-
-    for (const key of keys) {
-        const parsed = toFiniteNumber(nutriments[key]);
-        if (parsed !== undefined) {
-            const unit = nutriments[`${id}_unit`];
-            return { value: parsed.toFixed(1), unit: unit ? String(unit) : "g" };
-        }
-    }
-
-    return { value: null, unit: "g" };
-}
-
-function readCalories(nutriments: Record<string, number | string>): CalorieInfo {
-    const candidates: Array<[string, number]> = [
-        ["energy-kcal_100g", 1],
-        ["energy-kcal_prepared_100g", 1],
-        ["energy-kj_100g", KJ_TO_KCAL],
-        ["energy-kj_prepared_100g", KJ_TO_KCAL],
-        ["energy_100g", KJ_TO_KCAL]
-    ];
-
-    for (const [key, factor] of candidates) {
-        const parsed = toFiniteNumber(nutriments[key]);
-        if (parsed !== undefined) {
-            return { value: Math.round(parsed * factor), unit: "kcal", available: true };
-        }
-    }
-
-    return { value: 0, unit: "kcal", available: false };
-}
-
-/** Open Food Facts publishes numbers as numbers *and* as numeric strings. */
-function toFiniteNumber(raw: number | string | undefined): number | undefined {
-    if (raw === undefined || raw === null || raw === "") return undefined;
-
-    const parsed = typeof raw === "number" ? raw : Number.parseFloat(raw);
-    return Number.isFinite(parsed) ? parsed : undefined;
 }
