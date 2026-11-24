@@ -1,37 +1,37 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
-    import * as m from "$lib/paraglide/messages";
+    type Props = {
+        active?: boolean;
+    };
 
-    let { loading = false } = $props();
+    let { active = false }: Props = $props();
 </script>
 
-<div class="flex justify-between items-center pointer-events-auto ">
-  <button onclick={() => goto(resolve('/'))} class="btn btn-ghost btn-circle text-white z-50" aria-label={m.scan_back_home_aria()}>
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-  </button>
-  <h1 class="text-white font-bold text-lg z-20">{m.scan_title()}</h1>
-  <div class="w-12"></div>
-</div>
+<div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
+    <div class="relative aspect-4/3 w-1/2 max-w-[220px]">
+        <span class="absolute top-0 left-0 h-5 w-5 rounded-tl-md border-t-2 border-l-2 border-primary"></span>
+        <span class="absolute top-0 right-0 h-5 w-5 rounded-tr-md border-t-2 border-r-2 border-primary"></span>
+        <span class="absolute bottom-0 left-0 h-5 w-5 rounded-bl-md border-b-2 border-l-2 border-primary"></span>
+        <span class="absolute bottom-0 right-0 h-5 w-5 rounded-br-md border-b-2 border-r-2 border-primary"></span>
 
-<div class="flex-1 z-5">
-  <div class="relative h-full border-2 border-primary/50 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.6)]">
-    {#if !loading}
-      <div class="absolute inset-x-0 top-0 h-1 bg-primary shadow-[0_0_15px_#570df8] animate-scan-move"></div>
-    {/if}
-  </div>
+        {#if active}
+            <div class="absolute inset-x-2 top-0 h-0.5 rounded-full bg-primary shadow-[0_0_12px_var(--color-primary)] animate-scan-move"></div>
+        {/if}
+    </div>
 </div>
-
-<p class="text-white text-sm backdrop-blur-md p-3 rounded-md w-full text-center border border-white/10 z-20">
-    {m.scan_instruction()}
-</p>
 
 <style>
     @keyframes scan-move {
-        0% { top: 0%; }
-        100% { top: 100%; }
+        0%, 100% {
+            top: 8%;
+            opacity: 0.4;
+        }
+        50% {
+            top: 90%;
+            opacity: 1;
+        }
     }
+
     .animate-scan-move {
-        animation: scan-move 2s linear infinite;
+        animation: scan-move 2.2s ease-in-out infinite;
     }
 </style>

@@ -1,15 +1,19 @@
 <script lang="ts">
-	import {Flashlight} from '@lucide/svelte';
+    import { Flashlight } from "@lucide/svelte";
+    import { Scanner } from "$lib/ui/scanner.svelte";
+    import { Torch } from "$lib/ui/torch.svelte";
+    import * as m from "$lib/paraglide/messages";
 
-  import { Torch } from "$lib/ui/torch.svelte";
-  import * as m from "$lib/paraglide/messages";
+    const disabled = $derived(Scanner.status !== "scanning" || Scanner.isProcessing);
 </script>
 
-<!-- torch button -->
 <button
-	class="btn rounded-md h-full z-20 border-white/10 backdrop-blur-md {Torch.torchEnabled ? 'btn-warning' : 'btn-ghost'}"
-  aria-label={m.scan_torch_aria()}
-  onclick={() => Torch.toggle()}
+    type="button"
+    class="btn btn-sm btn-square {Torch.torchEnabled ? 'btn-warning' : 'btn-ghost'}"
+    aria-label={m.scan_torch_aria()}
+    aria-pressed={Torch.torchEnabled}
+    {disabled}
+    onclick={() => Torch.toggle()}
 >
-	<Flashlight/>
+    <Flashlight class="h-4 w-4" />
 </button>

@@ -40,6 +40,7 @@ export class ScannerEngine {
     #onDetected: ((code: string) => void) | null = null;
     #cancelFrame: (() => void) | null = null;
     #running = false;
+    #paused = false;
     #inFlight = false;
     #lastFrameTime = -1;
     #generation = 0;
@@ -47,8 +48,8 @@ export class ScannerEngine {
     async start(
         target: HTMLElement,
         onDetected: (code: string) => void,
-    ) {
-        if (this.#running) return;
+    ): Promise<boolean> {
+        if (this.#running) return true;
 
         if (!navigator.mediaDevices?.getUserMedia) {
             throw new DOMException(
@@ -60,7 +61,7 @@ export class ScannerEngine {
         const generation = ++this.#generation;
 
         await ensureWasm();
-        if (generation !== this.#generation) return;
+        if (generation !== this.#generation) return false;
 
         const stream = await navigator.mediaDevices.getUserMedia(
             cameraConstraints,
@@ -68,12 +69,13 @@ export class ScannerEngine {
 
         if (generation !== this.#generation) {
             stream.getTracks().forEach((track) => track.stop());
-            return;
+            return false;
         }
 
         this.#stream = stream;
         this.#onDetected = onDetected;
         this.#running = true;
+        this.#paused = false;
 
         const video = document.createElement("video") as FrameVideo;
         video.muted = true;
@@ -87,20 +89,60 @@ export class ScannerEngine {
         try {
             await video.play();
         } catch (error) {
-            if (generation !== this.#generation) return;
+            if (generation !== this.#generation) return false;
             this.stop();
             throw error;
         }
 
-        if (generation !== this.#generation) return;
+        if (generation !== this.#generation) return false;
 
         this.#canvas = document.createElement("canvas");
         this.#scheduleFrame();
+        return true;
+    }
+
+    pause(): boolean {
+        if (!this.#running || this.#paused) return false;
+
+        this.#paused = true;
+        this.#cancelFrame?.();
+        this.#cancelFrame = null;
+        this.#video?.pause();
+        return true;
+    }
+
+    async resume(): Promise<boolean> {
+        if (!this.#running || !this.#paused) return false;
+
+        const video = this.#video;
+        const track = this.#stream?.getVideoTracks()[0];
+        if (!video || !track || track.readyState !== "live") {
+            return false;
+        }
+
+        const generation = this.#generation;
+        this.#paused = false;
+
+        try {
+            await video.play();
+        } catch (error) {
+            if (generation !== this.#generation) return false;
+            this.#paused = true;
+            throw error;
+        }
+
+        if (generation !== this.#generation || !this.#running || this.#paused) {
+            return false;
+        }
+
+        this.#scheduleFrame();
+        return true;
     }
 
     stop() {
         this.#generation++;
         this.#running = false;
+        this.#paused = false;
         this.#cancelFrame?.();
         this.#cancelFrame = null;
 
@@ -142,10 +184,10 @@ export class ScannerEngine {
 
     #scheduleFrame() {
         const video = this.#video;
-        if (!video || !this.#running) return;
+        if (!video || !this.#running || this.#paused) return;
 
         const tick = () => {
-            if (!this.#running) return;
+            if (!this.#running || this.#paused) return;
 
             this.#scheduleFrame();
 
@@ -170,7 +212,7 @@ export class ScannerEngine {
     async #decodeFrame() {
         const video = this.#video;
         const canvas = this.#canvas;
-        if (!video || !canvas || !this.#running) return;
+        if (!video || !canvas || !this.#running || this.#paused) return;
         if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
             return;
         }
@@ -199,7 +241,7 @@ export class ScannerEngine {
                 liveReaderOptions,
             );
 
-            if (!this.#running) return;
+            if (!this.#running || this.#paused) return;
 
             const result = results.find(
                 (entry) => entry.isValid && entry.text,
