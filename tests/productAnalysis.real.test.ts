@@ -42,7 +42,7 @@ const fixtures = catalog.products.map(load);
 const scenarios = new Set(fixtures.map(fixture => fixture.entry.scenario));
 
 const GRADES = ["A", "B", "C", "D", "E", "?"];
-const LEVELS = ["low", "moderate", "high", "unknown"];
+const LEVELS = ["low", "moderate", "high"];
 
 describe("real product fixtures", () => {
     it("has more than one fixture, so invariants are not proven on a single shape", () => {
@@ -79,16 +79,15 @@ describe("real product fixtures", () => {
                 expect(total).toBe(analysis.score);
             });
 
-            it("always renders the four nutrient rows, with a value or a question mark", () => {
+            it("always renders the four nutrient rows, with a formatted value or null", () => {
                 const analysis = new ProductAnalysis(product, { useCustomScore: "nutriscore" });
 
                 expect(analysis.nutrients.map(row => row.id)).toEqual(["sugars", "salt", "saturated-fat", "fat"]);
 
                 for (const row of analysis.nutrients) {
-                    expect(row.value === "?" || /^\d+\.\d$/.test(row.value)).toBe(true);
+                    expect(row.value === null || /^\d+\.\d$/.test(row.value)).toBe(true);
                     expect(row.unit.length).toBeGreaterThan(0);
-                    expect(LEVELS).toContain(row.level);
-                    expect(row.color.length).toBeGreaterThan(0);
+                    expect(row.level === undefined || LEVELS.includes(row.level)).toBe(true);
                 }
             });
 
@@ -203,8 +202,9 @@ describe("captured payload scenarios", () => {
         const analysis = analysisOf("6111242101180", "nutriscore");
 
         expect(analysis.nutriscoreGrade).toBe("unknown");
-        expect(analysis.nutrients.map(row => row.value)).toEqual(["?", "?", "?", "3.0"]);
+        expect(analysis.nutrients.map(row => row.value)).toEqual([null, null, null, "3.0"]);
         expect(analysis.nutrients[2].level).toBe("moderate");
+        expect(analysis.hasNutrientData).toBe(true);
         expect(analysis.calories).toEqual({ value: 58, unit: "kcal", available: true });
         expect(analysis.score).toBe(0);
         expect(analysis.rating.grade).toBe("?");
@@ -213,8 +213,9 @@ describe("captured payload scenarios", () => {
     it("keeps published nutrient levels even when every value is missing", () => {
         const analysis = analysisOf("6111035002175", "nutriscore");
 
-        expect(analysis.nutrients.map(row => row.value)).toEqual(["?", "?", "?", "?"]);
+        expect(analysis.nutrients.map(row => row.value)).toEqual([null, null, null, null]);
         expect(analysis.nutrients.map(row => row.level)).toEqual(["low", "low", "low", "low"]);
+        expect(analysis.hasNutrientData).toBe(true);
         expect(analysis.calories.available).toBe(false);
         expect(analysis.score).toBe(100);
     });
@@ -255,13 +256,13 @@ describe("captured payload scenarios", () => {
         expect(analysis.scoreReasons.find(reason => reason.id === "additives")?.points).toBe(0);
     });
 
-    it("clamps the additive penalty at zero for a six-additive product", () => {
+    it("treats a six-additive product with no Nutri-Score as unrated while still listing its additives", () => {
         const analysis = analysisOf("0811620022118", "app");
 
+        expect(analysis.isRated).toBe(false);
         expect(analysis.additives.map(additive => additive.risk)).toEqual([2, 0, 0, 2, 2, 2]);
         expect(analysis.score).toBe(0);
-        expect(analysis.scoreReasons.find(reason => reason.id === "additives")?.points).toBe(0);
-        expect(analysis.rating.grade).toBe("?");
+        expect(analysis.rating).toMatchObject({ grade: "?", label: "Not rated" });
     });
 
     it("normalises a real 'not-applicable' grade to unknown at parse time", () => {
@@ -285,7 +286,7 @@ describe("captured payload scenarios", () => {
         expect(rowOf("0040600022651", "sugars")).toMatchObject({ value: "30.0", level: "high" });
         expect(rowOf("0040600022651", "saturated-fat")).toMatchObject({ value: "24.0", level: "high" });
         expect(rowOf("0040600022651", "fat")).toMatchObject({ value: "41.0", level: "high" });
-        expect(rowOf("0040600022651", "salt")).toMatchObject({ value: "?", level: "unknown" });
+        expect(rowOf("0040600022651", "salt")).toMatchObject({ value: null, level: undefined });
         expect(analysis.ingredientsText).toBeUndefined();
         expect(analysis.calories.value).toBe(566);
     });
@@ -303,14 +304,14 @@ describe("captured payload scenarios", () => {
         expect(productOf("20724696").product.ecoscore_grade).toBe("d");
     });
 
-    it("documents the current app score for a product with no nutrition data", () => {
-        // No nutrition, no additives, unknown grade: the additive budget still
-        // contributes its full 30 points, so the card reads "Very Poor".
+    it("treats a product with no nutrition data as unrated in app mode", () => {
         const analysis = analysisOf("6111250470209", "app");
 
-        expect(analysis.nutrients.every(row => row.value === "?")).toBe(true);
+        expect(analysis.isRated).toBe(false);
+        expect(analysis.nutrients.every(row => row.value === null)).toBe(true);
+        expect(analysis.hasNutrientData).toBe(false);
         expect(analysis.calories.available).toBe(false);
-        expect(analysis.score).toBe(30);
-        expect(analysis.rating.grade).toBe("E");
+        expect(analysis.score).toBe(0);
+        expect(analysis.rating).toMatchObject({ grade: "?", label: "Not rated" });
     });
 });

@@ -266,9 +266,15 @@ Conventions to follow when adding tests:
 
 The real fixtures pin current behaviour. The parser now keeps the full
 Green-Score vocabulary (`a-plus` through `f`) and normalises
-`unknown`/`not-applicable` Nutri-Scores to `unknown`. A product with no
-nutrition data still reaches an app score of 30 (rating E); that remains a
-characterization test to review deliberately.
+`unknown`/`not-applicable` Nutri-Scores to `unknown`.
+
+### Unrated Products
+When `nutriscoreGrade === "unknown"` (e.g. bottled water or sparse Open Food
+Facts entries without a Nutri-Score), `ProductAnalysis.isRated` is `false` in
+both `app` and `nutriscore` modes (`score === 0`, `rating.grade === "?"`,
+`rating.label === "Not rated"`). A rated Nutri-Score `e` product whose additive
+penalties clamp its `app` score to `0` still stays `isRated === true` with grade
+`E` ("Very Poor").
 
 The app calls the **deprecated v2** endpoints. v3.6 is the current API but
 changes the envelope (`status: "success"`, `result`/`errors`), renames

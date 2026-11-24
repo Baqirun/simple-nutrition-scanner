@@ -1,58 +1,48 @@
 <script lang="ts">
     import type { ProductAnalysis, ScoreReason } from "$lib/models/productAnalysis";
-    import type { AdditiveRisk } from "$lib/services/additiveService";
+    import type { NutrientLevel } from "$lib/types/product";
     import CircleCheck from "@lucide/svelte/icons/circle-check";
-    import FlaskConical from "@lucide/svelte/icons/flask-conical";
+    import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
 
     let { analysis }: { analysis: ProductAnalysis } = $props();
 
-    const riskStyles: Record<AdditiveRisk, string> = {
-        0: "bg-base-200 text-base-content/70",
-        1: "bg-yellow-100 text-yellow-800",
-        2: "bg-orange-100 text-orange-800",
-        3: "bg-red-100 text-red-700"
+    const levelColors: Record<NutrientLevel, string> = {
+        low: "bg-green-500",
+        moderate: "bg-yellow-500",
+        high: "bg-red-500"
     };
 
-    const isPenalty = (reason: ScoreReason) => reason.points < 0;
+    function pointsClass(reason: ScoreReason): string {
+        if (reason.points < 0) return "text-error";
+        if (reason.points > 0) return "text-success";
+        return "opacity-50";
+    }
+
+    function formatPoints(reason: ScoreReason): string {
+        if (reason.points > 0) return `+${reason.points}`;
+        return `${reason.points}`;
+    }
 </script>
 
 <!-- score breakdown: makes the rating explainable instead of a black box -->
-<div class="bg-base-100 rounded-3xl p-5 shadow-sm">
-    <h3 class="font-bold mb-4">Why this score?</h3>
-
-    <ul class="space-y-2">
-        {#each analysis.scoreReasons as reason (reason.id)}
-            <li class="flex items-center justify-between text-sm">
-                <span class="opacity-70">{reason.label}</span>
-                <span class="font-bold {isPenalty(reason) ? 'text-error' : 'text-success'}">
-                    {isPenalty(reason) ? '' : '+'}{reason.points}
-                </span>
-            </li>
-        {/each}
-    </ul>
-</div>
-
-{#if analysis.additives.length}
+{#if analysis.isRated}
     <div class="bg-base-100 rounded-3xl p-5 shadow-sm">
-        <h3 class="font-bold mb-4 flex items-center gap-2">
-            <FlaskConical class="text-primary" />
-            Additives ({analysis.additives.length})
-        </h3>
+        <h3 class="font-bold mb-4">Why this score?</h3>
 
-        <div class="flex flex-wrap gap-2">
-            {#each analysis.additives as additive (additive.tag)}
-                <span
-                    class="badge badge-sm border-0 py-3 text-[10px] font-bold uppercase {riskStyles[additive.risk]}"
-                    title={additive.tag}
-                >
-                    {additive.name}
-                </span>
+        <ul class="space-y-2">
+            {#each analysis.scoreReasons as reason (reason.id)}
+                <li class="flex items-center justify-between text-sm">
+                    <span class="opacity-70">{reason.label}</span>
+                    <span class="font-bold {pointsClass(reason)}">
+                        {formatPoints(reason)}
+                    </span>
+                </li>
             {/each}
-        </div>
+        </ul>
     </div>
 {/if}
 
-{#if analysis.nutrients.length}
+{#if analysis.hasNutrientData}
     <div class="bg-base-100 rounded-3xl p-5 shadow-sm">
         <h3 class="font-bold mb-4 flex items-center gap-2">
             <CircleCheck class="text-primary" />
@@ -61,20 +51,32 @@
 
         <div class="grid grid-cols-2 gap-3">
             {#each analysis.nutrients as point (point.id)}
-                <div class="bg-base-200 rounded-2xl p-3 grid grid-cols-2 items-center text-center">
+                {@const isMissing = point.value === null && !point.level}
+                <div class="bg-base-200 rounded-2xl p-3 grid grid-cols-2 items-center text-center {isMissing ? 'opacity-45' : ''}">
                     <div class="flex flex-col">
                         <span class="text-2xl mb-1">{point.icon}</span>
                         <span class="text-xs opacity-60 uppercase font-bold tracking-tighter">{point.label}</span>
                     </div>
                     <div class="flex flex-col items-center">
                         <div class="flex flex-row gap-2">
-                            <span class="font-black uppercase">{point.value}{point.value === "?" ? "" : ` ${point.unit}`}</span>
-                            <div class="rounded-full w-2 h-2 my-auto {point.color}"></div>
+                            <span class="font-black uppercase">
+                                {point.value !== null ? `${point.value} ${point.unit}` : "—"}
+                            </span>
+                            {#if point.level}
+                                <div class="rounded-full w-2 h-2 my-auto {levelColors[point.level]}"></div>
+                            {/if}
                         </div>
-                        <span class="text-xs uppercase opacity-75">{point.level}</span>
+                        {#if point.level}
+                            <span class="text-xs uppercase opacity-75">{point.level}</span>
+                        {/if}
                     </div>
                 </div>
             {/each}
         </div>
+    </div>
+{:else if analysis.exists}
+    <div class="bg-warning/10 border border-warning/20 rounded-3xl px-5 py-4 flex items-center gap-3 text-sm">
+        <TriangleAlert class="w-5 h-5 text-warning shrink-0" />
+        <p class="text-base-content/75">Nutrition facts are not available for this product.</p>
     </div>
 {/if}

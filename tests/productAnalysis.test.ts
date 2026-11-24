@@ -31,8 +31,10 @@ describe("ProductAnalysis", () => {
 
         it("reports that nothing exists", () => {
             expect(empty.exists).toBe(false);
+            expect(empty.isRated).toBe(false);
             expect(empty.score).toBe(0);
             expect(empty.nutrients).toEqual([]);
+            expect(empty.hasNutrientData).toBe(false);
             expect(empty.additives).toEqual([]);
             expect(empty.calories.available).toBe(false);
         });
@@ -164,14 +166,26 @@ describe("ProductAnalysis", () => {
             expect(analysis.score).toBe(70);
         });
 
-        it("never leaves the 0-100 range", () => {
+        it("keeps a rated grade-e product at grade E even when score clamps to zero", () => {
             const analysis = new ProductAnalysis(
                 product({ nutriscore_grade: "e", additives_tags: ["en:e202", "en:e202"] }),
                 { useCustomScore: "app" }
             );
 
+            expect(analysis.isRated).toBe(true);
             expect(analysis.score).toBe(0);
-            expect(analysis.rating.grade).toBe("?");
+            expect(analysis.rating).toMatchObject({ grade: "E", label: "Very Poor" });
+        });
+
+        it("marks a product without a Nutri-Score as unrated in app mode", () => {
+            const analysis = new ProductAnalysis(
+                product({ nutriscore_grade: "unknown", additives_tags: [] }),
+                { useCustomScore: "app" }
+            );
+
+            expect(analysis.isRated).toBe(false);
+            expect(analysis.score).toBe(0);
+            expect(analysis.rating).toMatchObject({ grade: "?", label: "Not rated" });
         });
 
         it("explains the score with reasons that add up to it", () => {
@@ -234,7 +248,8 @@ describe("ProductAnalysis", () => {
             );
 
             const salt = analysis.nutrients.find(row => row.id === "salt");
-            expect(salt).toMatchObject({ value: "1.3", unit: "g", level: "unknown", color: "bg-gray-400" });
+            expect(salt).toMatchObject({ value: "1.3", unit: "g", level: undefined });
+            expect(analysis.hasNutrientData).toBe(true);
         });
 
         it("falls back to the prepared measurement", () => {
@@ -246,10 +261,11 @@ describe("ProductAnalysis", () => {
             expect(analysis.nutrients.find(row => row.id === "sugars")?.value).toBe("8.0");
         });
 
-        it("marks a nutrient with no data as unknown", () => {
+        it("marks a nutrient with no data as null and undefined level", () => {
             const analysis = new ProductAnalysis(product({ nutriments: {} }), { useCustomScore: "app" });
 
-            expect(analysis.nutrients.find(row => row.id === "fat")).toMatchObject({ value: "?", level: "unknown" });
+            expect(analysis.nutrients.find(row => row.id === "fat")).toMatchObject({ value: null, level: undefined });
+            expect(analysis.hasNutrientData).toBe(false);
         });
     });
 
@@ -293,6 +309,13 @@ describe("ProductAnalysis", () => {
             );
 
             expect(analysis.ingredientsText).toBe("sugar");
+            expect(analysis.ingredients).toEqual({ text: "sugar", isEnglish: true });
+        });
+
+        it("marks non-English ingredients when English text is absent", () => {
+            const analysis = new ProductAnalysis(product({ ingredients_text: "sucre" }));
+
+            expect(analysis.ingredients).toEqual({ text: "sucre", isEnglish: false });
         });
 
         it("labels known additives with their stored name and risk", () => {

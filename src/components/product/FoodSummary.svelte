@@ -1,12 +1,9 @@
 <script lang="ts">
-    import type { Product } from "$lib/types/product";
     import { labelIcons } from "$lib/utils/helpers/labels";
     import { ratingClasses } from "$lib/utils/helpers/ratingClasses";
-    import {ProductAnalysis} from "$lib/models/productAnalysis";
+    import type { ProductAnalysis } from "$lib/models/productAnalysis";
 
-    type Props = {item: Product, analysis: ProductAnalysis};
-
-    let { item, analysis } : Props = $props()
+    let { analysis }: { analysis: ProductAnalysis } = $props();
 
     const tone = $derived(ratingClasses(analysis.rating));
 </script>
@@ -34,9 +31,9 @@
         <p class="text-base-content/60 text-center mb-4">{analysis.brands}</p>
 
         <!-- food labels -->
-        {#if item.product.labels_tags?.length}
+        {#if analysis.labels.length}
         <div class="flex flex-wrap justify-center gap-2 mb-6">
-            {#each item.product.labels_tags.slice(0, 5) as label}
+            {#each analysis.labels.slice(0, 5) as label}
                 <div class="badge bg-base-300 text-xs font-bold py-3">
                     <span class="mr-1 ">{labelIcons[label] || '🏷️'}</span>
                     {label.replace('en:', '').replace(/-/g, ' ')}
@@ -46,24 +43,54 @@
         {/if}
 
         <!-- score circle -->
-        <div class="flex items-center gap-6">
-	        <div
-						class="radial-progress border-8 border-base-content/10 {tone.ring}"
-						style="--value:{analysis.score}; --size:6rem; --thickness: 0.5rem;"
-						role="progressbar"
-						aria-label="Score {analysis.score} out of 100, grade {analysis.rating.grade}"
-					>
-						<span class="text-4xl font-black">{analysis.score}</span>
-            </div>
-
-            <div class="flex flex-col border-l pl-4 border-base-content/10">
-                <span class="text-xs uppercase tracking-widest opacity-60 font-bold">Energy</span>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-3xl font-black">{analysis.calories.available ? analysis.calories.value : "N/A"}</span>
-                    <span class="text-sm font-bold opacity-60">{analysis.calories.unit}</span>
+        {#if analysis.isRated}
+            <div class="flex items-center gap-6">
+                <div
+                    class="radial-progress border-8 border-base-content/10 {tone.ring}"
+                    style="--value:{analysis.score}; --size:6rem; --thickness: 0.5rem;"
+                    role="progressbar"
+                    aria-label="Score {analysis.score} out of 100, grade {analysis.rating.grade}"
+                >
+                    <span class="text-4xl font-black">{analysis.score}</span>
                 </div>
-                <span class="text-lg font-medium {tone.text}">{analysis.rating.label} Score</span>
+
+                <div class="flex flex-col border-l pl-4 border-base-content/10">
+                    <span class="text-xs uppercase tracking-widest opacity-60 font-bold">Energy</span>
+                    <div class="flex items-baseline gap-1">
+                        {#if analysis.calories.available}
+                            <span class="text-3xl font-black">{analysis.calories.value}</span>
+                            <span class="text-sm font-bold opacity-60">{analysis.calories.unit}</span>
+                        {:else}
+                            <span class="text-3xl font-black opacity-40">—</span>
+                        {/if}
+                    </div>
+                    <span class="text-lg font-medium {tone.text}">{analysis.rating.label} Score</span>
+                </div>
             </div>
-        </div>
+        {:else if analysis.calories.available}
+            <div class="flex items-center gap-6">
+                <div
+                    class="radial-progress border-8 border-base-content/10 text-base-content/25 opacity-50"
+                    style="--size:6rem; --thickness: 0rem;"
+                    role="img"
+                    aria-label="Not rated"
+                >
+                    <span class="text-3xl font-black text-base-content/50">—</span>
+                </div>
+
+                <div class="flex flex-col border-l pl-4 border-base-content/10">
+                    <span class="text-xs uppercase tracking-widest opacity-60 font-bold">Energy</span>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl font-black">{analysis.calories.value}</span>
+                        <span class="text-sm font-bold opacity-60">{analysis.calories.unit}</span>
+                    </div>
+                    <span class="text-base font-medium text-base-content/50">Not rated</span>
+                </div>
+            </div>
+        {:else}
+            <div class="badge badge-lg bg-base-200 border-base-300 text-base-content/60 font-semibold py-4 px-5">
+                Not rated
+            </div>
+        {/if}
     </div>
 </div>

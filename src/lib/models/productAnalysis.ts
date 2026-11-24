@@ -1,4 +1,4 @@
-import type { NutriScoreGrade, NutrientLevel, Product } from "$lib/types/product";
+import type { EcoScoreGrade, NutriScoreGrade, NutrientLevel, Product } from "$lib/types/product";
 import { additives, type AdditiveImpact, type AdditiveInfo } from "$lib/services/additiveService";
 import { settings } from "$lib/core/settings.svelte";
 
@@ -24,10 +24,14 @@ export type NutrientRow = {
     id: string;
     label: string;
     icon: string;
-    value: string;
+    value: string | null;
     unit: string;
-    level: NutrientLevel | "unknown";
-    color: string;
+    level: NutrientLevel | undefined;
+};
+
+export type IngredientsInfo = {
+    text: string;
+    isEnglish: boolean;
 };
 
 export type CalorieInfo = {
@@ -45,7 +49,7 @@ const RATING_BY_GRADE: Record<NutriScoreGrade, Rating> = {
     c: { grade: "C", label: "Mediocre", color: "yellow-500", hex: "#eab308" },
     d: { grade: "D", label: "Poor", color: "orange-500", hex: "#f97316" },
     e: { grade: "E", label: "Very Poor", color: "red-600", hex: "#dc2626" },
-    unknown: { grade: "?", label: "Unknown", color: "gray-400", hex: "" }
+    unknown: { grade: "?", label: "Not rated", color: "gray-400", hex: "" }
 };
 const MAX_ADDITIVE_POINTS = 30;
 const ORGANIC_BONUS = 10;
@@ -60,13 +64,6 @@ const NUTRIENT_CONFIG = [
     { id: "saturated-fat", label: "Sat. Fat", icon: "🥓" },
     { id: "fat", label: "Fat", icon: "🛢️" }
 ] as const;
-
-const LEVEL_COLORS: Record<NutrientLevel | "unknown", string> = {
-    low: "bg-green-500",
-    moderate: "bg-yellow-500",
-    high: "bg-red-500",
-    unknown: "bg-gray-400"
-};
 
 const UNKNOWN_REASONS: ScoreReason[] = [
     { id: "nutrition", label: "No nutrition data", points: 0 }
@@ -108,24 +105,47 @@ export class ProductAnalysis {
         return this.#product?.nova_group;
     }
 
+    get ecoscoreGrade(): EcoScoreGrade | undefined {
+        return this.#product?.ecoscore_grade;
+    }
+
+    get labels(): string[] {
+        return this.#product?.labels_tags ?? [];
+    }
+
+    get ingredients(): IngredientsInfo | undefined {
+        if (this.#product?.ingredients_text_en) {
+            return { text: this.#product.ingredients_text_en, isEnglish: true };
+        }
+        if (this.#product?.ingredients_text) {
+            return { text: this.#product.ingredients_text, isEnglish: false };
+        }
+        return undefined;
+    }
+
     get ingredientsText(): string | undefined {
-        return this.#product?.ingredients_text_en || this.#product?.ingredients_text;
+        return this.ingredients?.text;
     }
 
     get isOrganic(): boolean {
         return (this.#product?.labels_tags ?? []).some(label => label.includes("organic"));
     }
 
+    get isRated(): boolean {
+        return this.exists && this.nutriscoreGrade !== "unknown";
+    }
+
     /**
      * Public API: score, rating and the reasons behind them.
      */
     get score(): number {
+        if (!this.isRated) return 0;
         return this.#scoreFunction === "app" ? this.calculateAppScore() : NUTRI_SCORE_UI[this.nutriscoreGrade];
     }
 
     /** Contribution of every scoring rule, already clamped to the final score. */
     get scoreReasons(): ScoreReason[] {
-        if (!this.#product) return UNKNOWN_REASONS;
+        if (!this.isRated) return UNKNOWN_REASONS;
 
         if (this.#scoreFunction !== "app") {
             return [
@@ -156,6 +176,8 @@ export class ProductAnalysis {
     }
 
     get rating(): Rating {
+        if (!this.isRated) return RATING_BY_GRADE.unknown;
+
         // In Nutri-Score mode the displayed grade is the published grade, so the
         // star rating is derived from it directly. Deriving it from the 0-100
         // projection instead would mislabel grades C and D, because that
@@ -165,12 +187,11 @@ export class ProductAnalysis {
         }
 
         const s = this.score;
-        if (s >= 90) return { grade: "A", label: "Excellent", color: "green-600", hex: "#16a34a" };
-        if (s >= 75) return { grade: "B", label: "Good", color: "green-500", hex: "#22c55e" };
-        if (s >= 60) return { grade: "C", label: "Mediocre", color: "yellow-500", hex: "#eab308" };
-        if (s >= 45) return { grade: "D", label: "Poor", color: "orange-500", hex: "#f97316" };
-        if (s > 0) return { grade: "E", label: "Very Poor", color: "red-600", hex: "#dc2626" };
-        return { grade: "?", label: "Unknown", color: "gray-400", hex: "" };
+        if (s >= 90) return RATING_BY_GRADE.a;
+        if (s >= 75) return RATING_BY_GRADE.b;
+        if (s >= 60) return RATING_BY_GRADE.c;
+        if (s >= 45) return RATING_BY_GRADE.d;
+        return RATING_BY_GRADE.e;
     }
 
     get nutrients(): NutrientRow[] {
@@ -180,7 +201,7 @@ export class ProductAnalysis {
         const nutriments = this.#product.nutriments ?? {};
 
         return NUTRIENT_CONFIG.map(item => {
-            const level = (levels[item.id] as NutrientLevel | undefined) ?? "unknown";
+            const level = levels[item.id] as NutrientLevel | undefined;
             const { value, unit } = readNutrient(nutriments, item.id);
 
             return {
@@ -189,10 +210,13 @@ export class ProductAnalysis {
                 icon: item.icon,
                 value,
                 unit,
-                level,
-                color: LEVEL_COLORS[level]
+                level
             };
         });
+    }
+
+    get hasNutrientData(): boolean {
+        return this.nutrients.some(row => row.value !== null || row.level !== undefined);
     }
 
     get additives(): AdditiveInfo[] {
@@ -226,7 +250,7 @@ export class ProductAnalysis {
     }
 }
 
-function readNutrient(nutriments: Record<string, number | string>, id: string): { value: string; unit: string } {
+function readNutrient(nutriments: Record<string, number | string>, id: string): { value: string | null; unit: string } {
     // Open Food Facts only publishes `_value`/`_unit` for some products (salt and sodium especially)
     const keys = [`${id}_100g`, `${id}_prepared_100g`, id, `${id}_value`] as const;
 
@@ -238,7 +262,7 @@ function readNutrient(nutriments: Record<string, number | string>, id: string): 
         }
     }
 
-    return { value: "?", unit: "g" };
+    return { value: null, unit: "g" };
 }
 
 function readCalories(nutriments: Record<string, number | string>): CalorieInfo {

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import type { Product, EcoScoreGrade } from "$lib/types/product";
+    import type { EcoScoreGrade } from "$lib/types/product";
     import type { ProductAnalysis } from "$lib/models/productAnalysis";
     import type { AdditiveRisk } from "$lib/services/additiveService";
     import CircleQuestionMark from "@lucide/svelte/icons/circle-question-mark";
 
-    type Props = { item: Product; analysis: ProductAnalysis };    let { item, analysis }: Props = $props();
+    let { analysis }: { analysis: ProductAnalysis } = $props();
 
     const ecoStyles: Record<EcoScoreGrade, { badge: string; label: string }> = {
         "a-plus": { badge: "bg-green-100 text-green-700", label: "Very low impact" },
@@ -22,9 +22,9 @@
 
     const novaLabels: Record<number, string> = {
         1: 'Unprocessed',
-        2: 'Processed',
-        3: 'Ultra processed',
-        4: 'Ultra processed'
+        2: 'Culinary ingredients',
+        3: 'Processed',
+        4: 'Ultra-processed'
     };
 
     const riskColors: Record<AdditiveRisk, string> = {
@@ -57,12 +57,12 @@
          </div>
          {/if}
 
-         {#if item.product.ecoscore_grade}
-         {@const eco = ecoStyles[item.product.ecoscore_grade]}
+         {#if analysis.ecoscoreGrade}
+         {@const eco = ecoStyles[analysis.ecoscoreGrade]}
          <div class="flex items-center justify-between text-sm">
              <div class="flex items-center gap-3">
                  <div class="w-8 h-8 rounded-lg {eco.badge} flex items-center justify-center text-sm font-bold uppercase">
-                     {ecoGradeLabel(item.product.ecoscore_grade)}
+                     {ecoGradeLabel(analysis.ecoscoreGrade)}
                  </div>
                  <span class="font-medium">Eco-Score</span>
              </div>
@@ -70,7 +70,9 @@
          </div>
          {/if}
 
+         {#if analysis.novaGroup || analysis.ecoscoreGrade}
          <div class="divider my-1"></div>
+         {/if}
 
          <div class="text-sm">
          {#if analysis.additives.length > 0}

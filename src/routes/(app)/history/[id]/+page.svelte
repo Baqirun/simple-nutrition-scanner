@@ -39,17 +39,17 @@
     </a>
 
     {#if item}
-		<FoodSummary {item} {analysis}/>
+		<FoodSummary {analysis}/>
 
     <div class="p-4 space-y-4 max-w-lg mx-auto">
         <!-- Impact Summary -->
         <FoodAnalysis {analysis}/>
 
         <!-- Other Details -->
-        <FoodDetails {item} {analysis}/>
+        <FoodDetails {analysis}/>
 
         <!-- food ingredients -->
-        <FoodIngredient {item}/>
+        <FoodIngredient {analysis}/>
     </div>
 
     {:else if productStore.loading}

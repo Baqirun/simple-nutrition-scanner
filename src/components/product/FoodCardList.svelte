@@ -54,15 +54,25 @@
             {info.brands}
           </p>
           <div class="flex items-center gap-1 mt-1">
-             <div class="w-2 h-2 rounded-full {tone.dot}"></div>
-             <span class="text-[10px] font-bold uppercase opacity-60 tracking-wider">Score: {info.rating.label }</span>
+             {#if info.isRated}
+               <div class="w-2 h-2 rounded-full {tone.dot}"></div>
+               <span class="text-[10px] font-bold uppercase opacity-60 tracking-wider">Score: {info.rating.label}</span>
+             {:else}
+               <span class="text-[10px] font-bold uppercase opacity-45 tracking-wider">Not rated</span>
+             {/if}
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <div class="radial-progress border-4 border-base-content/10 {tone.ring}" style="--value:{info.score}; --size:2.5rem; --thickness: 4px;" role="progressbar" aria-label="Score {info.score} out of 100, grade {info.rating.grade}">
-            <span class="text-[10px] font-black text-base-content">{info.rating.grade}</span>
-          </div>
+          {#if info.isRated}
+            <div class="radial-progress border-4 border-base-content/10 {tone.ring}" style="--value:{info.score}; --size:2.5rem; --thickness: 4px;" role="progressbar" aria-label="Score {info.score} out of 100, grade {info.rating.grade}">
+              <span class="text-[10px] font-black text-base-content">{info.rating.grade}</span>
+            </div>
+          {:else}
+            <div class="radial-progress border-4 border-base-content/10 opacity-45" style="--size:2.5rem; --thickness: 0;" role="img" aria-label="Not rated">
+              <span class="text-[10px] font-black text-base-content/60">—</span>
+            </div>
+          {/if}
 
           {#if toggleDelete}
             <button
