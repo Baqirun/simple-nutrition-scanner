@@ -5,6 +5,7 @@ import type { LookupResult } from "$lib/types/result";
 import { ui } from "./alert.svelte";
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
+import * as m from "$lib/paraglide/messages";
 
 class ProductStore {
     items = $state<Product[]>([]);
@@ -34,8 +35,8 @@ class ProductStore {
                 case "found":
                     ui.show(
                         result.fromCache
-                            ? "Loaded from history"
-                            : "Product found!",
+                            ? m.toast_loaded_from_history()
+                            : m.toast_product_found(),
                         "success",
                     );
                     goto(resolve(`/history/${result.code}`));
@@ -43,18 +44,18 @@ class ProductStore {
 
                 case "not_found":
                     ui.show(
-                        `Product ${result.code} not found`,
+                        m.toast_product_not_found_code({ code: result.code }),
                         "warning",
                     );
                     break;
 
                 case "rate_limited":
-                    ui.show("Rate limit reached", "warning");
+                    ui.show(m.toast_rate_limited(), "warning");
                     break;
 
                 case "blacklisted":
                     ui.show(
-                        "Product previously not found",
+                        m.toast_blacklisted(),
                         "info",
                     );
                     break;
@@ -121,15 +122,15 @@ class ProductStore {
 function describeFailure(result: LookupResult): string {
     switch (result.type) {
         case "not_found":
-            return "Product not found in Open Food Facts";
+            return m.error_not_found_off();
         case "rate_limited":
-            return "Open Food Facts rate limit reached. Try again in a minute.";
+            return m.error_rate_limited_off();
         case "blacklisted":
-            return "This barcode was already reported as not found";
+            return m.error_blacklisted_off();
         case "error":
             return result.message;
         default:
-            return "Product not found";
+            return m.product_not_found();
     }
 }
 

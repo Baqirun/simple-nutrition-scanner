@@ -4,6 +4,7 @@
   import { checkActive } from '$lib/utils/helpers/navigation';
   import { Camera, History, Settings } from '@lucide/svelte';
   import type { IconComponent } from '$lib/types/icon';
+  import * as m from '$lib/paraglide/messages';
 
   // `resolve` is typed against the generated route union, so the paths have to
   // keep their literal types instead of widening to `string`.
@@ -17,9 +18,9 @@
   }
 
   const navItems: NavItems[] = [
-    { label: 'History', path: '/history', icon: History },
-    { label: 'Scan', path: '/scan', isCenter: true },
-    { label: 'Settings', path: '/settings', icon: Settings }
+    { label: m.nav_history(), path: '/history', icon: History },
+    { label: m.nav_scan(), path: '/scan', isCenter: true },
+    { label: m.nav_settings(), path: '/settings', icon: Settings }
   ];
 
   // Derived index for the sliding logic
@@ -44,7 +45,7 @@
           <button
             onclick={() => goto(resolve("/scan"))}
             class="btn btn-primary btn-circle btn-xl -top-2 absolute shadow-lg border-4 border-base-200 hover:scale-110 active:scale-95 transition-all"
-            aria-label="open camera"
+            aria-label={m.nav_open_camera()}
           >
           	<Camera/>
           </button>

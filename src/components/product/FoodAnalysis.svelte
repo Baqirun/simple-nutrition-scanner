@@ -1,6 +1,12 @@
 <script lang="ts">
     import type { ProductAnalysis, ScoreReason } from "$lib/models/productAnalysis";
     import type { NutrientLevel } from "$lib/types/product";
+    import {
+        localizedNutrientLabel,
+        localizedNutrientLevel,
+        localizedScoreReason
+    } from "$lib/utils/helpers/localizedProduct";
+    import * as m from "$lib/paraglide/messages";
     import CircleCheck from "@lucide/svelte/icons/circle-check";
     import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
 
@@ -27,12 +33,12 @@
 <!-- score breakdown: makes the rating explainable instead of a black box -->
 {#if analysis.isRated}
     <div class="bg-base-100 rounded-3xl p-5 shadow-sm">
-        <h3 class="font-bold mb-4">Why this score?</h3>
+        <h3 class="font-bold mb-4">{m.analysis_why_score()}</h3>
 
         <ul class="space-y-2">
             {#each analysis.scoreReasons as reason (reason.id)}
                 <li class="flex items-center justify-between text-sm">
-                    <span class="opacity-70">{reason.label}</span>
+                    <span class="opacity-70">{localizedScoreReason(reason, analysis)}</span>
                     <span class="font-bold {pointsClass(reason)}">
                         {formatPoints(reason)}
                     </span>
@@ -46,7 +52,7 @@
     <div class="bg-base-100 rounded-3xl p-5 shadow-sm">
         <h3 class="font-bold mb-4 flex items-center gap-2">
             <CircleCheck class="text-primary" />
-            Analysis (per 100g)
+            {m.analysis_per_100g()}
         </h3>
 
         <div class="grid grid-cols-2 gap-3">
@@ -55,7 +61,7 @@
                 <div class="bg-base-200 rounded-2xl p-3 grid grid-cols-2 items-center text-center {isMissing ? 'opacity-45' : ''}">
                     <div class="flex flex-col">
                         <span class="text-2xl mb-1">{point.icon}</span>
-                        <span class="text-xs opacity-60 uppercase font-bold tracking-tighter">{point.label}</span>
+                        <span class="text-xs opacity-60 uppercase font-bold tracking-tighter">{localizedNutrientLabel(point.id)}</span>
                     </div>
                     <div class="flex flex-col items-center">
                         <div class="flex flex-row gap-2">
@@ -67,7 +73,7 @@
                             {/if}
                         </div>
                         {#if point.level}
-                            <span class="text-xs uppercase opacity-75">{point.level}</span>
+                            <span class="text-xs uppercase opacity-75">{localizedNutrientLevel(point.level)}</span>
                         {/if}
                     </div>
                 </div>
@@ -77,6 +83,6 @@
 {:else if analysis.exists}
     <div class="bg-warning/10 border border-warning/20 rounded-3xl px-5 py-4 flex items-center gap-3 text-sm">
         <TriangleAlert class="w-5 h-5 text-warning shrink-0" />
-        <p class="text-base-content/75">Nutrition facts are not available for this product.</p>
+        <p class="text-base-content/75">{m.analysis_no_nutrition()}</p>
     </div>
 {/if}
