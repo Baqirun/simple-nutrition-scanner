@@ -6,6 +6,7 @@ import { ui } from "./alert.svelte";
 import { logger } from "./logger.svelte";
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
+import * as m from "$lib/paraglide/messages";
 
 class ScannerController {
     isActive = $state(false);
@@ -53,12 +54,12 @@ class ScannerController {
             code = await this.#engine.decodeImage(file);
         } catch (error) {
             logger.error("[scanner] image decode failed", error);
-            ui.show("Could not read that image", "error");
+            ui.show(m.toast_image_decode_failed(), "error");
             return;
         }
 
         if (!code) {
-            ui.show("No barcode detected", "warning");
+            ui.show(m.toast_no_barcode_detected(), "warning");
             return;
         }
 
@@ -77,8 +78,8 @@ class ScannerController {
                 case "found":
                     ui.show(
                         result.fromCache
-                            ? "Loaded from history"
-                            : "Product found!",
+                            ? m.toast_loaded_from_history()
+                            : m.toast_product_found(),
                         "success",
                     );
                     goto(resolve(`/history/${result.code}`));
@@ -87,21 +88,21 @@ class ScannerController {
 
                 case "not_found":
                     ui.show(
-                        `Product ${result.code} not found`,
+                        m.toast_product_not_found_code({ code: result.code }),
                         "warning",
                     );
                     break;
 
                 case "rate_limited":
                     ui.show(
-                        "Rate limit reached. Wait a minute.",
+                        m.toast_rate_limited_wait(),
                         "warning",
                     );
                     break;
 
                 case "blacklisted":
                     ui.show(
-                        `product not found.`,
+                        m.toast_blacklisted_short(),
                         "warning",
                     );
                     break;
@@ -117,14 +118,14 @@ class ScannerController {
 
     #handleCameraError(error: any) {
         if (error?.name === "NotAllowedError")
-            ui.show("Camera permission denied", "error");
+            ui.show(m.toast_camera_denied(), "error");
         else if (error?.name === "NotFoundError")
-            ui.show("No camera found", "error");
+            ui.show(m.toast_camera_not_found(), "error");
         else if (error?.name === "NotReadableError")
-            ui.show("Camera is in use by another app", "error");
+            ui.show(m.toast_camera_in_use(), "error");
         else if (error?.name === "NotSupportedError")
             ui.show(error.message, "error");
-        else ui.show("Camera error", "error");
+        else ui.show(m.toast_camera_error(), "error");
     }
 }
 

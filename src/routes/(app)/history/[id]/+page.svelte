@@ -15,6 +15,7 @@
     import TriangleAlert from '@lucide/svelte/icons/triangle-alert';
     import CircleArrowLeft from '@lucide/svelte/icons/circle-arrow-left';
     import { onMount } from 'svelte';
+    import * as m from '$lib/paraglide/messages';
 
     // `current` keeps the previously viewed product around between routes, so the
     // page clears it before each load instead of rendering the wrong product.
@@ -26,13 +27,13 @@
 
     const item = $derived(productStore.current);
     const analysis = $derived(new ProductAnalysis(item));
-    const title = $derived(item?.product.product_name?.trim() || 'Product Detail');
+    const title = $derived(item?.product.product_name?.trim() || m.product_detail_fallback_title());
 </script>
 
 <div class="mx-auto min-h-screen bg-base-300 pb-24">
     <!-- header with back button -->
     <a class="sticky top-0 z-10 bg-base-100/80 backdrop-blur-md px-4 py-2 flex items-center hover:bg-base-300/50" href="{resolve('/history')}">
-        <div class="btn btn-ghost btn-circle btn-md" aria-label="go to history">
+        <div class="btn btn-ghost btn-circle btn-md" aria-label={m.product_back_to_history_aria()}>
             <CircleArrowLeft/>
         </div>
         <span class="ml-2 font-semibold truncate max-w-md">{title}</span>
@@ -55,16 +56,16 @@
     {:else if productStore.loading}
         <div class="flex flex-col items-center justify-center pt-20 gap-4">
             <span class="loading loading-ring loading-lg text-primary"></span>
-            <p class="text-sm opacity-50 font-medium">Analyzing product...</p>
+            <p class="text-sm opacity-50 font-medium">{m.product_analyzing()}</p>
         </div>
     {:else }
         <div class="p-10 text-center">
             <div class="bg-error/10 text-error p-6 rounded-xl mb-4">
                 <TriangleAlert class="h-12 w-12 mx-auto mb-2"/>
-                <p class="font-bold">{productStore.currentError || 'Product not found'}</p>
-                <p class="text-xs opacity-70 mt-1">Barcode {page.params.id}</p>
+                <p class="font-bold">{productStore.currentError || m.product_not_found()}</p>
+                <p class="text-xs opacity-70 mt-1">{m.product_barcode_label({ code: page.params.id ?? '' })}</p>
             </div>
-            <button onclick={() => goto(resolve('/history'))} class="btn btn-primary rounded-full px-8">Return to History</button>
+            <button onclick={() => goto(resolve('/history'))} class="btn btn-primary rounded-full px-8">{m.product_return_history()}</button>
         </div>
     {/if}
 </div>

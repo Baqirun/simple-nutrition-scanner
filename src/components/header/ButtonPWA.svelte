@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { Download } from '@lucide/svelte'
 	import { logger } from '$lib/ui/logger.svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let deferredPrompt = $state<any>(null);
 	let canInstall = $state(false);
@@ -37,11 +38,11 @@
 
 {#if canInstall}
 	<button
-		aria-label="install the apps"
+		aria-label={m.pwa_install_aria()}
 		onclick={installApp}
 		class="btn btn-primary btn-sm normal-case mr-2"
 	>
 		<Download/>
-		Install
+		{m.pwa_install()}
 	</button>
 {/if}

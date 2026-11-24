@@ -6,6 +6,7 @@
     import ScanOverlay from '$components/Scanner/ScanOverlay.svelte';
     import ButtonFileScan from '$components/Scanner/ButtonFileScan.svelte';
     import ButtonToggleTorch from '$components/Scanner/ButtonToggleTorch.svelte';
+    import * as m from '$lib/paraglide/messages';
 
     let scannerContainer: HTMLDivElement;
 
@@ -24,7 +25,7 @@
   {#if Scanner.isProcessing}
       <div class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/20 backdrop-blur-sm">
           <span class="loading loading-ring loading-xl text-primary"></span>
-          <p class="text-white mt-4 font-medium tracking-wide">Processing...</p>
+          <p class="text-white mt-4 font-medium tracking-wide">{m.scan_processing()}</p>
       </div>
   {/if}
 

@@ -8,11 +8,20 @@ function readScoreFunction(): ScoreFunction {
     return SCORE_FUNCTIONS.includes(stored as ScoreFunction) ? (stored as ScoreFunction) : 'nutriscore';
 }
 
+const DEFAULT_LANDING_TITLE = 'Hello!';
+const DEFAULT_LANDING_SUBTITLE = "Ready to see what's inside your food today?";
+
+function readCustomSetting(key: string, legacyDefault: string): string {
+    const stored = localStorage.getItem(key);
+    if (!stored || stored === legacyDefault) return '';
+    return stored;
+}
+
 class GlobalSettings {
     appName = $state(localStorage.getItem('app_name') || 'Leeka');
     showNutriscoreOnCards = $state(localStorage.getItem('show_nutriscore') !== 'false');
-    landingTitle = $state(localStorage.getItem('landing_title') || 'Hello!')
-    landingSubtitle = $state(localStorage.getItem('landing_subtitle') || "Ready to see what's inside your food today?")
+    landingTitle = $state(readCustomSetting('landing_title', DEFAULT_LANDING_TITLE));
+    landingSubtitle = $state(readCustomSetting('landing_subtitle', DEFAULT_LANDING_SUBTITLE));
     instanceId = $state(localStorage.getItem('instance_id') || this.generateID());
     useCustomScore = $state<ScoreFunction>(readScoreFunction());
 

@@ -1,15 +1,16 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { resolve } from "$app/paths";
+    import * as m from "$lib/paraglide/messages";
 
     let { loading = false } = $props();
 </script>
 
 <div class="flex justify-between items-center pointer-events-auto ">
-  <button onclick={() => goto(resolve('/'))} class="btn btn-ghost btn-circle text-white z-50" aria-label='back, go to home'>
+  <button onclick={() => goto(resolve('/'))} class="btn btn-ghost btn-circle text-white z-50" aria-label={m.scan_back_home_aria()}>
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
   </button>
-  <h1 class="text-white font-bold text-lg z-20">Scan Barcode</h1>
+  <h1 class="text-white font-bold text-lg z-20">{m.scan_title()}</h1>
   <div class="w-12"></div>
 </div>
 
@@ -22,7 +23,7 @@
 </div>
 
 <p class="text-white text-sm backdrop-blur-md p-3 rounded-md w-full text-center border border-white/10 z-20">
-    Center the barcode or upload a photo
+    {m.scan_instruction()}
 </p>
 
 <style>
