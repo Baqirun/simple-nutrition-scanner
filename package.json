@@ -5,9 +5,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
+		"dev:serve": "vite dev --host",
 		"build": "vite build",
 		"preview": "vite preview",
-		"preview:serve": "cross-env BASE_PATH='/myapp' && bun run build && bun run preview",
+		"preview:serve": "cross-env BASE_PATH=/myapp bun run build && cross-env BASE_PATH=/myapp vite preview --host",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",

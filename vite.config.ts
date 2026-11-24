@@ -8,7 +8,13 @@ export default defineConfig({
         tailwindcss(),
         sveltekit()
     ],
+    server: {
+        allowedHosts: ['.ts.net']
+    },
+    preview: {
+        allowedHosts: ['.ts.net']
+    },
     define: {
-		__APP_VERSION__: JSON.stringify(pkg.version),
-	}
+        __APP_VERSION__: JSON.stringify(pkg.version),
+    }
 });
